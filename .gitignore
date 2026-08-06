@@ -12,9 +12,13 @@ venv/
 # Environment variables / secrets
 .env
 
-# Data (never commit raw patient data)
+# Data (never commit REAL patient data — e.g. any future Ethiopian
+# hospital dataset stays out. Exception: the UCI CKD dataset is public,
+# anonymized, and CC-BY 4.0 licensed, so it's safe and useful to keep
+# in version control for reproducibility.)
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/uci_ckd.csv
 data/processed/*
 !data/processed/.gitkeep
 
