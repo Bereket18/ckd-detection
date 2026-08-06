@@ -22,9 +22,18 @@ FUSION_MODEL_PATH = SAVED_MODELS_DIR / "fusion_model.pt"
 # UCI Chronic Kidney Disease dataset — column reference
 # (the classic 400-row / 24-feature dataset: age, bp, sg, al, su, rbc, pc,
 # pcc, ba, bgr, bu, sc, sod, pot, hemo, pcv, wc, rc, htn, dm, cad, appet,
-# pe, ane -> classification)
-# Missing values in the raw files are marked "?" — handle in preprocess.py.
+# pe, ane -> class)
+#
+# Confirmed against the actual downloaded CSV (Sprint 1):
+#   - target column is named "class", not "classification"
+#   - missing values are genuinely blank/NaN in this CSV, not "?"-marked
+#   - there's a leading "id" column that is not a feature and must be dropped
+#   - "class" has 2 dirty values ("ckd\t" with a stray tab) — strip before use
+#   - missingness is uneven: rbc ~38%, rc ~32%, wc ~26% missing — worth
+#     flagging in the report, not just silently imputing without comment
 # ---------------------------------------------------------------------------
+
+ID_COLUMN = "id"
 
 NUMERIC_COLUMNS = [
     "age", "bp", "sg", "al", "su", "bgr", "bu", "sc", "sod", "pot",
@@ -36,7 +45,7 @@ BINARY_COLUMNS = [
     "rbc", "pc", "pcc", "ba", "htn", "dm", "cad", "appet", "pe", "ane",
 ]
 
-TARGET_COLUMN = "classification"  # values: "ckd" / "notckd"
+TARGET_COLUMN = "class"  # values: "ckd" / "notckd" (a couple of rows have a stray "ckd\t" — strip whitespace)
 
 FEATURE_COLUMNS = NUMERIC_COLUMNS + BINARY_COLUMNS
 
