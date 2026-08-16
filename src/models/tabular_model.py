@@ -58,7 +58,10 @@ def tune_model(name, X_train, y_train, cv=5):
     """GridSearchCV over PARAM_GRIDS[name], returns the best fitted estimator."""
     y_bin = _to_binary_target(y_train)
     skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
-    grid = GridSearchCV(CANDIDATES[name], PARAM_GRIDS[name], cv=skf, scoring="recall", n_jobs=-1)
+    # n_jobs=1 (not -1): parallel workers can cause OpenBLAS thread/memory
+    # crashes on some Windows setups. Dataset is small enough that this
+    # costs no meaningful speed.
+    grid = GridSearchCV(CANDIDATES[name], PARAM_GRIDS[name], cv=skf, scoring="recall", n_jobs=1)
     grid.fit(X_train, y_bin)
     return grid.best_estimator_, grid.best_params_
 
