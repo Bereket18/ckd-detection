@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
 NUM_CLASSES = 4  # normal, cyst, tumor, stone
-CLASS_NAMES = ["normal", "cyst", "tumor", "stone"]
+CLASS_NAMES = ["cyst", "normal", "stone", "tumor"]  # order matters: must match ImageFolder's alphabetical assignment of the real folder names (Cyst, Normal, Stone, Tumor), NOT the intuitive listing order
 
 TRAIN_TRANSFORMS = transforms.Compose([
     transforms.Resize((224, 224)),
