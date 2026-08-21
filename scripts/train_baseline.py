@@ -43,6 +43,9 @@ def main():
 
     config.SAVED_MODELS_DIR.mkdir(parents=True, exist_ok=True)
     tabular_model.save_model(best_model, config.TABULAR_MODEL_PATH)
+    import joblib
+    joblib.dump(scaler, config.TABULAR_SCALER_PATH)
+    print(f"Saved scaler to {config.TABULAR_SCALER_PATH}")
     print(f"Saved final model ({best_name}) to {config.TABULAR_MODEL_PATH}")
 
     return best_name, comparison, results
