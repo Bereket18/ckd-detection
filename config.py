@@ -15,6 +15,7 @@ DATA_PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 SAVED_MODELS_DIR = ROOT_DIR / "saved_models"
 
 TABULAR_MODEL_PATH = SAVED_MODELS_DIR / "tabular_model.joblib"
+TABULAR_SCALER_PATH = SAVED_MODELS_DIR / "tabular_scaler.joblib"
 IMAGING_MODEL_PATH = SAVED_MODELS_DIR / "imaging_model.pt"
 FUSION_MODEL_PATH = SAVED_MODELS_DIR / "fusion_model.pt"
 
@@ -60,3 +61,30 @@ FEATURE_PROMPTS = {col: f"Enter value for '{col}': " for col in FEATURE_COLUMNS}
 # ---------------------------------------------------------------------------
 RANDOM_SEED = 42
 TEST_SIZE = 0.2
+
+FEATURE_PROMPTS = {
+    "age": "What is your age (in years)?",
+    "bp": "What is your blood pressure (diastolic, mm/Hg)?",
+    "sg": "What is your urine specific gravity (typically 1.005-1.025; check a recent urinalysis)?",
+    "al": "What is your urine albumin level (0-5 scale from a urinalysis)?",
+    "su": "What is your urine sugar level (0-5 scale from a urinalysis)?",
+    "bgr": "What is your blood glucose (random, mg/dL)?",
+    "bu": "What is your blood urea (mg/dL)?",
+    "sc": "What is your serum creatinine (mg/dL)?",
+    "sod": "What is your sodium level (mEq/L)?",
+    "pot": "What is your potassium level (mEq/L)?",
+    "hemo": "What is your hemoglobin level (g/dL)?",
+    "pcv": "What is your packed cell volume (%)?",
+    "wc": "What is your white blood cell count (cells/cumm)?",
+    "rc": "What is your red blood cell count (millions/cmm)?",
+    "rbc": "Is your red blood cell status normal or abnormal (from a urinalysis)? [normal/abnormal]",
+    "pc": "Is your pus cell status normal or abnormal? [normal/abnormal]",
+    "pcc": "Are pus cell clumps present in your urine? [present/notpresent]",
+    "ba": "Is bacteria present in your urine? [present/notpresent]",
+    "htn": "Do you have a history of hypertension (high blood pressure)? [yes/no]",
+    "dm": "Do you have a history of diabetes mellitus? [yes/no]",
+    "cad": "Do you have a history of coronary artery disease? [yes/no]",
+    "appet": "How would you describe your appetite? [good/poor]",
+    "pe": "Do you have pedal edema (swelling in your feet/ankles)? [yes/no]",
+    "ane": "Do you have anemia? [yes/no]",
+}
