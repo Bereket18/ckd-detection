@@ -11,17 +11,20 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
+import joblib  # noqa: E402
 import config  # noqa: E402
 from src.data.load_tabular import fetch_uci_ckd  # noqa: E402
-from src.data.preprocess import clean_tabular, split_train_test  # noqa: E402
+from src.data.preprocess import prepare_tabular  # noqa: E402
 from src.models import tabular_model  # noqa: E402
 
 
 def main():
     print("Loading and cleaning data...")
     raw = fetch_uci_ckd()
-    cleaned, scaler = clean_tabular(raw)
-    X_train, X_test, y_train, y_test = split_train_test(cleaned)
+    # prepare_tabular splits BEFORE fitting the imputers/scaler, so the
+    # test set contributes nothing to them. Metrics below are therefore a
+    # genuine held-out estimate. See AUDIT.md (P0-3) for what this replaced.
+    X_train, X_test, y_train, y_test, preprocessor = prepare_tabular(raw)
     print(f"  train: {len(X_train)} rows, test: {len(X_test)} rows\n")
 
     print("Comparing candidate models (5-fold cross-validation, accuracy)...")
@@ -30,7 +33,9 @@ def main():
         print(f"  {name:20s} {mean:.4f} (+/- {std:.4f})")
 
     best_name = max(comparison, key=lambda k: comparison[k][0])
-    print(f"\nBest candidate: {best_name} — tuning with GridSearchCV (scoring=recall)...")
+    # Plain ASCII in printed output: this runs on the Windows console for
+    # demos, where cp1252 renders an em-dash as a replacement character.
+    print(f"\nBest candidate: {best_name} - tuning with GridSearchCV (scoring=recall)...")
     best_model, best_params = tabular_model.tune_model(best_name, X_train, y_train)
     print(f"  best params: {best_params}")
 
@@ -43,10 +48,13 @@ def main():
 
     config.SAVED_MODELS_DIR.mkdir(parents=True, exist_ok=True)
     tabular_model.save_model(best_model, config.TABULAR_MODEL_PATH)
-    import joblib
-    joblib.dump(scaler, config.TABULAR_SCALER_PATH)
-    print(f"Saved scaler to {config.TABULAR_SCALER_PATH}")
+    joblib.dump(preprocessor, config.TABULAR_PREPROCESSOR_PATH)
+    # Sprints 4/5 compare themselves against this baseline; writing the
+    # measured numbers here stops them from quoting a stale literal.
+    tabular_model.save_metrics(best_name, results, config.TABULAR_METRICS_PATH)
+    print(f"Saved preprocessor to {config.TABULAR_PREPROCESSOR_PATH}")
     print(f"Saved final model ({best_name}) to {config.TABULAR_MODEL_PATH}")
+    print(f"Saved baseline metrics to {config.TABULAR_METRICS_PATH}")
 
     return best_name, comparison, results
 

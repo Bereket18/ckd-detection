@@ -1,8 +1,12 @@
 """
 Sprint 4 entry point: trains the multimodal fusion model and
-compares it against the Sprint 2 tabular-only baseline (98.75%
-accuracy) -- the whole point of this sprint is showing fusion adds
-real value, not just complexity.
+compares it against the Sprint 2 tabular-only baseline -- the whole
+point of this sprint is showing fusion adds real value, not just
+complexity.
+
+The baseline figures are read from saved_models/tabular_metrics.json
+(written by train_baseline.py) rather than hardcoded, so the
+comparison can't quote a stale number. See AUDIT.md (P1-1).
 
 Usage:
     python scripts/train_fusion.py
@@ -19,12 +23,13 @@ import torch.nn as nn  # noqa: E402
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc_auc_score  # noqa: E402
 
 from src.data.load_tabular import fetch_uci_ckd  # noqa: E402
-from src.data.preprocess import clean_tabular, split_train_test  # noqa: E402
+from src.data.preprocess import prepare_tabular  # noqa: E402
 from src.data.pair_modalities import build_image_pairing  # noqa: E402
 from src.models.text_model import generate_synthetic_notes, encode_notes  # noqa: E402
 from src.models.fusion_model import (  # noqa: E402
     FusionModel, load_frozen_imaging_encoder, encode_image,
 )
+from src.models import tabular_model  # noqa: E402
 
 EPOCHS = 30  # small dataset (400 rows), fast per epoch -- more epochs is cheap here
 
@@ -35,8 +40,7 @@ def main():
 
     print("Loading and cleaning tabular data...")
     raw = fetch_uci_ckd()
-    cleaned, _ = clean_tabular(raw)
-    X_train, X_test, y_train, y_test = split_train_test(cleaned)
+    X_train, X_test, y_train, y_test, _ = prepare_tabular(raw)
     print(f"  train: {len(X_train)} rows, test: {len(X_test)} rows")
 
     print("Generating synthetic notes + TF-IDF encoding...")
@@ -46,8 +50,10 @@ def main():
     text_test_matrix, _ = encode_notes(notes_test, vectorizer=vectorizer)
 
     print("Pairing tabular rows with imaging examples (Sprint 4 simulated pairing)...")
-    train_image_paths = build_image_pairing(cleaned.loc[X_train.index])
-    test_image_paths = build_image_pairing(cleaned.loc[X_test.index], seed=43)  # different seed: test pairing independent of train
+    # build_image_pairing only needs the cleaned "ckd"/"notckd" label per row,
+    # which is exactly what y_train/y_test are (a Series named config.TARGET_COLUMN).
+    train_image_paths = build_image_pairing(y_train.to_frame())
+    test_image_paths = build_image_pairing(y_test.to_frame(), seed=43)  # different seed: test pairing independent of train
 
     print("Loading frozen Sprint 3 imaging encoder...")
     imaging_encoder = load_frozen_imaging_encoder(config.IMAGING_MODEL_PATH, device)
@@ -107,7 +113,13 @@ def main():
     print(f"  recall:    {recall:.4f}")
     print(f"  f1:        {f1:.4f}")
     print(f"  auc_roc:   {auc:.4f}")
-    print(f"\nSprint 2 tabular-only baseline was: accuracy=0.9875, recall=0.98")
+    baseline = tabular_model.load_metrics(config.TABULAR_METRICS_PATH)
+    if baseline is None:
+        print("\nTabular-only baseline not found -- run scripts/train_baseline.py "
+              "to generate it, then re-run this for the comparison.")
+    else:
+        print(f"\nSprint 2 tabular-only baseline ({baseline['model']}) was: "
+              f"accuracy={baseline['accuracy']:.4f}, recall={baseline['recall']:.4f}")
     print("Compare the numbers above against that baseline honestly -- "
           "the point of this sprint is finding out whether fusion actually helps, not assuming it does.")
 

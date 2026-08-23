@@ -7,9 +7,11 @@ the same process.
 Design choice (see project discussion): guided Q&A, not free-form
 LLM parsing, because accuracy is the priority and a scripted
 question flow can't misread a value the way natural-language
-extraction could. Uses the Sprint 2 tabular baseline model (98.75%
-accuracy) -- not the fusion or federated models -- since it remains
-the most accurate verified model in the project.
+extraction could. Uses the Sprint 2 tabular baseline model -- not the
+fusion or federated models -- since it remains the most accurate
+verified model in the project. The baseline's measured metrics live in
+saved_models/tabular_metrics.json; this docstring deliberately does not
+quote them, because the figure it used to quote went stale silently.
 """
 
 from __future__ import annotations
@@ -22,10 +24,9 @@ import joblib  # noqa: E402
 import pandas as pd  # noqa: E402
 from rich.console import Console  # noqa: E402
 from rich.panel import Panel  # noqa: E402
-from rich.table import Table  # noqa: E402
 
 from src.data.load_tabular import fetch_uci_ckd  # noqa: E402
-from src.data.preprocess import clean_tabular, split_train_test  # noqa: E402
+from src.data.preprocess import prepare_tabular  # noqa: E402
 from src.explain.shap_utils import explain_prediction, explanation_to_sentence  # noqa: E402
 
 console = Console()
@@ -48,10 +49,13 @@ def load_background_data():
     SHAP needs a reference sample of "typical" patients to compute
     explanations against -- reuse the training data for this rather
     than requiring a separate stored file.
+
+    Known cost: this re-runs the whole load/encode/split pipeline on every
+    consultation (~10s). Saving a background sample at training time would
+    remove it -- tracked as P1-5 in AUDIT.md.
     """
     raw = fetch_uci_ckd()
-    cleaned, _ = clean_tabular(raw)
-    X_train, _, _, _ = split_train_test(cleaned)
+    X_train, _, _, _, _ = prepare_tabular(raw)
     return X_train
 
 
@@ -129,25 +133,29 @@ def collect_patient_data() -> dict:
     return answers
 
 
-def load_scaler():
-    if not config.TABULAR_SCALER_PATH.exists():
+def load_preprocessor():
+    if not config.TABULAR_PREPROCESSOR_PATH.exists():
         return None
-    return joblib.load(config.TABULAR_SCALER_PATH)
+    return joblib.load(config.TABULAR_PREPROCESSOR_PATH)
 
 
-def answers_to_feature_row(answers: dict, scaler) -> pd.DataFrame:
+def answers_to_feature_row(answers: dict, preprocessor) -> pd.DataFrame:
     """
     Converts raw patient answers into the exact model-ready format.
     Binary fields are encoded 0/1 the same way training data was.
-    Numeric fields MUST be scaled with the SAME fitted StandardScaler
-    used during training (Sprint 2) -- the model was trained on
-    standardized values (roughly -3 to +3), not raw patient-entered
-    numbers (e.g. age=62, glucose=150). Feeding raw values directly
-    would silently produce meaningless predictions: this exact bug
-    was caught by testing with a clinically obvious "sick" patient
-    profile and noticing the predicted risk was wrong, not by
-    inspection alone. Returns a DataFrame (not a raw array) so the
-    model and SHAP explainer both see real column names.
+    Numeric fields MUST then go through the SAME fitted preprocessor used
+    during training (Sprint 2) -- the model was trained on standardized
+    values (roughly -3 to +3), not raw patient-entered numbers (e.g.
+    age=62, glucose=150). Feeding raw values directly would silently
+    produce meaningless predictions: this exact bug was caught by testing
+    with a clinically obvious "sick" patient profile and noticing the
+    predicted risk was wrong, not by inspection alone.
+
+    Passing the whole row through preprocessor.transform() (rather than
+    applying a standalone scaler by hand, as this used to) means there is
+    only one code path that can define "model-ready", so training and
+    inference cannot drift apart again. Returns a DataFrame (not a raw
+    array) so the model and SHAP explainer both see real column names.
     """
     binary_map = {"yes": 1, "no": 0, "normal": 1, "abnormal": 0, "present": 1, "notpresent": 0, "good": 1, "poor": 0}
     row = {}
@@ -155,23 +163,22 @@ def answers_to_feature_row(answers: dict, scaler) -> pd.DataFrame:
         value = answers[field]
         row[field] = binary_map[value] if field in config.BINARY_COLUMNS else value
     df = pd.DataFrame([row], columns=config.FEATURE_COLUMNS)
-    df[config.NUMERIC_COLUMNS] = scaler.transform(df[config.NUMERIC_COLUMNS])
-    return df
+    return preprocessor.transform(df)
 
 
 def run_agent() -> None:
     model = load_trained_model()
-    scaler = load_scaler()
-    if model is None or scaler is None:
-        missing = config.TABULAR_MODEL_PATH if model is None else config.TABULAR_SCALER_PATH
+    preprocessor = load_preprocessor()
+    if model is None or preprocessor is None:
+        missing = config.TABULAR_MODEL_PATH if model is None else config.TABULAR_PREPROCESSOR_PATH
         console.print(
-            f"[yellow]No trained model/scaler found yet at {missing}.\n"
+            f"[yellow]No trained model/preprocessor found yet at {missing}.\n"
             "Run scripts/train_baseline.py first, then re-run this agent.[/yellow]"
         )
         return
 
     answers = collect_patient_data()
-    feature_row = answers_to_feature_row(answers, scaler)
+    feature_row = answers_to_feature_row(answers, preprocessor)
 
     with console.status("[cyan]Analyzing your responses...[/cyan]"):
         prediction = model.predict(feature_row)[0]
@@ -194,14 +201,3 @@ def run_agent() -> None:
 
 if __name__ == "__main__":
     run_agent()
-
-def test_validate_numeric_rejects_out_of_scale_value():
-    ok, result = validate_numeric("23", "su")
-    assert ok is False
-    assert "range" in result.lower()
-
-
-def test_validate_numeric_accepts_in_range_value():
-    ok, result = validate_numeric("3", "su")
-    assert ok is True
-    assert result == 3.0

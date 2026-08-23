@@ -1,9 +1,12 @@
 """
 Sprint 5 entry point: runs the federated learning simulation and
 compares the final federated model's accuracy against the Sprint 2
-centralized baseline (98.75%) -- the key question this sprint
-answers is how much, if anything, federating the training costs in
-accuracy.
+centralized baseline -- the key question this sprint answers is how
+much, if anything, federating the training costs in accuracy.
+
+The baseline figure is read from saved_models/tabular_metrics.json
+(written by train_baseline.py) rather than hardcoded, so the
+comparison can't quote a stale number. See AUDIT.md (P1-1).
 
 Usage:
     python scripts/train_federated.py
@@ -15,8 +18,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 import config  # noqa: E402
 from src.data.load_tabular import fetch_uci_ckd  # noqa: E402
-from src.data.preprocess import clean_tabular, split_train_test  # noqa: E402
+from src.data.preprocess import prepare_tabular  # noqa: E402
 from src.federated.server import run_simulation  # noqa: E402
+from src.models import tabular_model  # noqa: E402
 
 NUM_CLIENTS = 3
 NUM_ROUNDS = 10
@@ -25,8 +29,7 @@ NUM_ROUNDS = 10
 def main():
     print("Loading and cleaning data...")
     raw = fetch_uci_ckd()
-    cleaned, _ = clean_tabular(raw)
-    X_train, X_test, y_train, y_test = split_train_test(cleaned)
+    X_train, X_test, y_train, y_test, _ = prepare_tabular(raw)
 
     X_train_arr = X_train.values
     X_test_arr = X_test.values
@@ -47,8 +50,18 @@ def main():
     if accuracies:
         final_acc = accuracies[-1][1]
         print(f"\nFinal federated accuracy: {final_acc:.4f}")
-        print("Sprint 2 centralized baseline was: 0.9875")
-        print(f"Gap: {0.9875 - final_acc:.4f} ({'federation cost this much accuracy' if final_acc < 0.9875 else 'federation matched or beat the centralized baseline'})")
+
+        baseline = tabular_model.load_metrics(config.TABULAR_METRICS_PATH)
+        if baseline is None:
+            print("Centralized baseline not found -- run scripts/train_baseline.py "
+                  "to generate it, then re-run this for the comparison.")
+        else:
+            base_acc = baseline["accuracy"]
+            gap = base_acc - final_acc
+            verdict = ("federation cost this much accuracy" if gap > 0
+                       else "federation matched or beat the centralized baseline")
+            print(f"Sprint 2 centralized baseline ({baseline['model']}) was: {base_acc:.4f}")
+            print(f"Gap: {gap:.4f} ({verdict})")
 
 
 if __name__ == "__main__":

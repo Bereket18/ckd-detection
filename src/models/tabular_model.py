@@ -6,6 +6,7 @@ from Sprints 3-4 can be a stretch goal on top of this).
 """
 
 from __future__ import annotations
+import json
 import joblib
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -94,3 +95,27 @@ def evaluate(model, X_test, y_test) -> dict:
 
 def save_model(model, path):
     joblib.dump(model, path)
+
+
+def save_metrics(model_name, results, path):
+    """
+    Persist the baseline's measured held-out metrics so later sprints can
+    compare against the real number instead of a hardcoded copy of it.
+
+    Only the JSON-serializable scalar metrics are written -- the sklearn
+    classification_report string is human-only and would just bloat the file.
+    """
+    payload = {
+        "model": model_name,
+        **{k: results[k] for k in ("accuracy", "precision", "recall", "f1", "auc_roc")},
+        "confusion_matrix": results["confusion_matrix"],
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def load_metrics(path):
+    """Returns the saved baseline metrics, or None if the baseline hasn't been trained yet."""
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))

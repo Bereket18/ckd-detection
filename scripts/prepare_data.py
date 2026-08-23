@@ -1,7 +1,11 @@
 """
-Sprint 1 entry point: loads the raw UCI CKD dataset, cleans it, splits
-it, and saves the processed data to data/processed/ so Sprint 2 doesn't
-need to re-run this pipeline every time a model is trained.
+Sprint 1 entry point: loads the raw UCI CKD dataset, encodes it, splits it
+(stratified), fits imputation/scaling on the TRAIN SPLIT ONLY, and writes
+the two resulting splits to data/processed/ for inspection.
+
+Note: this script is an inspection/reporting aid, not a required build
+step — the training scripts each call prepare_tabular() themselves rather
+than reading these CSVs. See AUDIT.md (P2-5).
 
 Usage:
     python scripts/prepare_data.py
@@ -12,8 +16,9 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 import config  # noqa: E402
+import pandas as pd  # noqa: E402
 from src.data.load_tabular import fetch_uci_ckd  # noqa: E402
-from src.data.preprocess import clean_tabular, split_train_test  # noqa: E402
+from src.data.preprocess import prepare_tabular  # noqa: E402
 
 
 def main():
@@ -21,13 +26,10 @@ def main():
     raw = fetch_uci_ckd()
     print(f"  {raw.shape[0]} rows, {raw.shape[1]} columns")
 
-    print("Cleaning (encoding binaries, imputing missing values, scaling)...")
-    cleaned, scaler = clean_tabular(raw)
-    missing_after = cleaned[config.FEATURE_COLUMNS].isna().sum().sum()
-    print(f"  missing values remaining after cleaning: {missing_after}")
-
-    print("Splitting into train/test (stratified)...")
-    X_train, X_test, y_train, y_test = split_train_test(cleaned)
+    print("Encoding, splitting (stratified), then imputing + scaling on the train split only...")
+    X_train, X_test, y_train, y_test, _ = prepare_tabular(raw)
+    missing_after = X_train.isna().sum().sum() + X_test.isna().sum().sum()
+    print(f"  missing values remaining after preprocessing: {missing_after}")
     print(f"  train: {len(X_train)} rows, test: {len(X_test)} rows")
 
     config.DATA_PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -39,8 +41,10 @@ def main():
     )
     print(f"Saved train.csv and test.csv to {config.DATA_PROCESSED_DIR}")
 
-    class_balance = cleaned[config.TARGET_COLUMN].value_counts()
+    class_balance = pd.concat([y_train, y_test]).value_counts()
     print(f"\nClass balance (full cleaned dataset): {dict(class_balance)}")
+    print("\nNote: train.csv/test.csv are written scaled, using a preprocessor fit on\n"
+          "the train split only. Do NOT re-fit a scaler on them.")
 
 
 if __name__ == "__main__":

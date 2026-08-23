@@ -1,9 +1,24 @@
 """
-Data cleaning utilities for the tabular (clinical/lab) modality.
+Data cleaning and preprocessing for the tabular (clinical/lab) modality.
 
-Sprint 1 owns this file. `encode_binary_column` below is implemented
-now (Sprint 0) as a working example + proof the environment/test setup
-is correct — everything else is a stub for Sprint 1 to fill in.
+The important structural rule in this file: cleaning is split into two
+stages, and the boundary between them is what keeps the evaluation honest.
+
+  1. encode_tabular()     -- row-independent. Each row's output depends
+                             only on that row (strip the target, map the
+                             binary text categories to 0/1). Safe to run
+                             on the whole dataset before splitting.
+  2. TabularPreprocessor  -- LEARNS from the data it sees (imputation
+                             medians, scaling mean/std). Must be fit on
+                             the TRAINING split only, then applied to test.
+
+Fitting stage 2 before splitting leaks test-set statistics -- the median
+used to fill missing values and the mean/std used to standardize -- into
+the training data, which silently inflates every reported metric. That is
+exactly what this module used to do (see AUDIT.md, P0-3). prepare_tabular()
+is the one function callers should use: it enforces the correct order, so
+the mistake cannot be reintroduced by accident at a call site the way it
+was replicated across four training scripts before.
 """
 
 from __future__ import annotations
@@ -21,7 +36,7 @@ def encode_binary_column(series: pd.Series) -> pd.Series:
     column to NaN). Strips whitespace first, since the raw CSV has
     stray leading spaces and tabs (e.g. " yes", "\\tno").
     Unrecognized or missing values are returned as NaN so they can be
-    handled explicitly by the missing-value strategy in Sprint 1,
+    handled explicitly by the imputation step in TabularPreprocessor,
     rather than silently becoming 0.
     """
     mapping = {
@@ -72,34 +87,85 @@ def clean_target(series: pd.Series) -> pd.Series:
     return series.astype(str).str.strip()
 
 
-def clean_tabular(df: pd.DataFrame) -> pd.DataFrame:
+def encode_tabular(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Full cleaning pipeline: clean the target, encode binary columns,
-    impute missing values (median for numeric, most-frequent for
-    binary), and scale numeric features. Returns a fully model-ready
-    DataFrame plus the fitted scaler (needed to transform new patient
-    input the same way at inference time).
+    Stage 1 of cleaning: the row-independent part.
+
+    Cleans the target and encodes the binary text columns to 0/1. Every
+    output row depends only on the corresponding input row, so running
+    this on the full dataset before splitting leaks nothing.
+
+    Missing values are deliberately left as NaN here — filling them
+    requires learning a median/mode from data, which belongs in
+    TabularPreprocessor where it can be restricted to the training split.
     """
     import config
-    from sklearn.impute import SimpleImputer
-    from sklearn.preprocessing import StandardScaler
 
     df = df.copy()
     df[config.TARGET_COLUMN] = clean_target(df[config.TARGET_COLUMN])
-
     for col in config.BINARY_COLUMNS:
         df[col] = encode_binary_column(df[col])
+    return df
 
-    numeric_imputer = SimpleImputer(strategy="median")
-    df[config.NUMERIC_COLUMNS] = numeric_imputer.fit_transform(df[config.NUMERIC_COLUMNS])
 
-    binary_imputer = SimpleImputer(strategy="most_frequent")
-    df[config.BINARY_COLUMNS] = binary_imputer.fit_transform(df[config.BINARY_COLUMNS])
+class TabularPreprocessor:
+    """
+    Stage 2 of cleaning: the three transforms that have to LEARN from
+    data, bundled into one object so they are fit, saved, and applied
+    together.
 
-    scaler = StandardScaler()
-    df[config.NUMERIC_COLUMNS] = scaler.fit_transform(df[config.NUMERIC_COLUMNS])
+    Bundling is the point. These used to be fit inline in a single
+    function and only the StandardScaler was saved, so the agent had to
+    remember to re-apply it by hand at inference time (a bug that did
+    happen — see the note in agent/chatbot.py) and the imputer's learned
+    medians were discarded entirely. Now "preprocess this patient exactly
+    the way training did" is one call, and one file on disk.
 
-    return df, scaler
+    Fit on the training split only. transform() is what runs on test data
+    and on live patient input.
+    """
+
+    def __init__(self):
+        import config
+        from sklearn.impute import SimpleImputer
+        from sklearn.preprocessing import StandardScaler
+
+        self.numeric_columns = list(config.NUMERIC_COLUMNS)
+        self.binary_columns = list(config.BINARY_COLUMNS)
+        # keep_empty_features=True guarantees the output keeps the same
+        # column count even if some column were entirely missing in the
+        # training split — otherwise SimpleImputer silently drops it and
+        # train/test shapes diverge.
+        self.numeric_imputer = SimpleImputer(strategy="median", keep_empty_features=True)
+        self.binary_imputer = SimpleImputer(strategy="most_frequent", keep_empty_features=True)
+        self.scaler = StandardScaler()
+        self.fitted = False
+
+    def fit(self, X: pd.DataFrame) -> "TabularPreprocessor":
+        self.numeric_imputer.fit(X[self.numeric_columns])
+        self.binary_imputer.fit(X[self.binary_columns])
+        # The scaler must be fit on imputed values, not on NaNs — fitting
+        # it on the raw column would compute mean/std from the non-missing
+        # subset only, which is a different (and less correct) statistic
+        # than the one the model will actually see at transform time.
+        self.scaler.fit(self.numeric_imputer.transform(X[self.numeric_columns]))
+        self.fitted = True
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        if not self.fitted:
+            raise RuntimeError(
+                "TabularPreprocessor.transform() called before fit(). Fit on the "
+                "training split first (or use prepare_tabular, which does it for you)."
+            )
+        out = X.copy()
+        imputed_numeric = self.numeric_imputer.transform(out[self.numeric_columns])
+        out[self.numeric_columns] = self.scaler.transform(imputed_numeric)
+        out[self.binary_columns] = self.binary_imputer.transform(out[self.binary_columns])
+        return out
+
+    def fit_transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        return self.fit(X).transform(X)
 
 
 def split_train_test(df: pd.DataFrame):
@@ -107,6 +173,9 @@ def split_train_test(df: pd.DataFrame):
     Stratified train/test split using config.TEST_SIZE and
     config.RANDOM_SEED, stratified on config.TARGET_COLUMN so both
     classes are represented fairly in each split.
+
+    Runs on the output of encode_tabular(), i.e. before imputation —
+    splitting rows is unaffected by the NaNs still present at that point.
     """
     import config
     from sklearn.model_selection import train_test_split
@@ -118,4 +187,30 @@ def split_train_test(df: pd.DataFrame):
         test_size=config.TEST_SIZE,
         random_state=config.RANDOM_SEED,
         stratify=y,
+    )
+
+
+def prepare_tabular(df: pd.DataFrame):
+    """
+    The leak-free end-to-end tabular pipeline, and the function every
+    caller should use:
+
+        encode -> split -> fit the preprocessor on TRAIN ONLY -> transform both
+
+    Returns (X_train, X_test, y_train, y_test, preprocessor).
+
+    The returned preprocessor is what must be saved alongside the model:
+    it is the only thing that can turn a new patient's raw answers into
+    the exact representation the model was trained on.
+    """
+    encoded = encode_tabular(df)
+    X_train, X_test, y_train, y_test = split_train_test(encoded)
+
+    preprocessor = TabularPreprocessor().fit(X_train)
+    return (
+        preprocessor.transform(X_train),
+        preprocessor.transform(X_test),
+        y_train,
+        y_test,
+        preprocessor,
     )

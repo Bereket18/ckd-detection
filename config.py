@@ -15,7 +15,16 @@ DATA_PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 SAVED_MODELS_DIR = ROOT_DIR / "saved_models"
 
 TABULAR_MODEL_PATH = SAVED_MODELS_DIR / "tabular_model.joblib"
-TABULAR_SCALER_PATH = SAVED_MODELS_DIR / "tabular_scaler.joblib"
+# The fitted TabularPreprocessor (imputers + scaler bundled together).
+# Replaces the older standalone "tabular_scaler.joblib": the imputers have
+# to be saved too, or live patient input is transformed differently than
+# the training data was. See AUDIT.md (P0-3).
+TABULAR_PREPROCESSOR_PATH = SAVED_MODELS_DIR / "tabular_preprocessor.joblib"
+# Measured held-out metrics for the baseline, written by train_baseline.py.
+# Sprints 4 and 5 compare themselves against the baseline; they used to
+# hardcode its accuracy, which silently became false the moment the
+# pipeline changed. They now read this file. See AUDIT.md (P1-1).
+TABULAR_METRICS_PATH = SAVED_MODELS_DIR / "tabular_metrics.json"
 IMAGING_MODEL_PATH = SAVED_MODELS_DIR / "imaging_model.pt"
 FUSION_MODEL_PATH = SAVED_MODELS_DIR / "fusion_model.pt"
 

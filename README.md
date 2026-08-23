@@ -25,13 +25,20 @@ persistent internet connection.
 
 | Component | Result |
 |---|---|
-| Structured-data baseline (logistic regression) | **98.75% accuracy, 98% recall** on held-out test data |
+| Structured-data baseline (random forest) | **97.50% accuracy, 100% recall** on held-out test data (0 false negatives out of 50 CKD cases) |
 | Imaging classifier (ResNet-18 transfer learning) | 83.9% test accuracy (after fixing a class-imbalance bug that had one class's recall at only 52%) |
 | Multimodal fusion | 88.75% — a **negative result vs. the baseline, correctly diagnosed**: caused by synthetic tabular-imaging pairing (no real shared patients across the two source datasets), not a training flaw |
-| Federated learning (3 simulated hospitals, FedAvg) | 97.50% — quantifies a 1.25-point accuracy cost of federating training |
+| Federated learning (3 simulated hospitals, FedAvg) | 98.75% — federating training cost **no** accuracy here. Note the comparison is not model-for-model: the federated client wraps logistic regression, while the centralized baseline is a recall-tuned random forest that trades 2 false positives for 0 false negatives |
 | Agent interface | Working end-to-end; live testing caught and fixed two real bugs (a feature-scaling bug and a missing input-range validation bug) before they could reach a demo |
 
 Every number above is from an actual executed run, not a projected or planned figure.
+
+> **These figures were re-measured after a train/test leakage bug was fixed.**
+> The earlier reported baseline (98.75% / 98%) was inflated because the
+> imputer and scaler were fit on all 400 rows before the train/test split.
+> Removing the leak also changed which model wins cross-validation
+> (logistic regression → random forest). Full detail, and every other fix,
+> is documented in [AUDIT.md](AUDIT.md).
 
 ## Quick start
 
@@ -40,7 +47,7 @@ git clone https://github.com/Bereket18/ckd-detection.git
 cd ckd-detection
 make setup              # creates venv, installs core requirements
 make test                 # runs the test suite
-python scripts/train_baseline.py    # trains the model + saves the scaler
+python scripts/train_baseline.py    # trains the model + saves the preprocessor
 python -m src.agent.chatbot           # talk to it
 ```
 
@@ -74,9 +81,10 @@ src/
     chatbot.py                         # the conversational interface — the only user-facing layer
 scripts/                                # one entry point per training/data task
 notebooks/                              # executed exploratory data analysis
-tests/                                  # pytest — 25+ tests across every module
-saved_models/                           # trained models (regenerable, not committed — see .gitignore)
+tests/                                  # pytest — 59 tests across every module
+saved_models/                           # trained models + measured metrics (regenerable, not committed — see .gitignore)
 data/README.md                          # data sourcing, licensing, and known limitations
+AUDIT.md                                # engineering audit + full record of every fix applied
 ```
 
 ## Data sources
@@ -94,11 +102,13 @@ data/README.md                          # data sourcing, licensing, and known li
 
 ## Known limitations
 
-- Fusion and federated results are both honestly below the tabular-only baseline; the report documents why, rather than hiding it.
+- Fusion is honestly below the tabular-only baseline; the report documents why, rather than hiding it. (Federated training no longer is — see the Results note above.)
+- The federated-vs-centralized comparison is not model-for-model: the Flower client wraps logistic regression while the centralized baseline now selects a random forest. Reading it as "federation improves accuracy" would overclaim; the defensible reading is "federating cost no accuracy on this dataset."
+- The federated per-round accuracy curve is flat (98.75% from round 1), so the simulation demonstrates that FedAvg *converges* on this data, not a gradual learning trajectory.
 - The imaging model's class-imbalance fix trades some normal-class recall for much better stone/tumor recall — an intentional, documented trade-off.
 - Multimodal fusion pairing is synthetic (label-consistent, not real per-patient correspondence) since the tabular and imaging datasets share no real patients.
 - This is a research/course prototype, not a clinically validated diagnostic tool.
 
 ## License
 
-MIT — see LICENSE.
+MIT — see [License.txt](License.txt).
