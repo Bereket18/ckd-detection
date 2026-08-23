@@ -96,7 +96,7 @@ class FusionModel(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(embed_dim + embed_dim + imaging_dim, 32),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.5),
             nn.Linear(32, num_classes),
         )
 

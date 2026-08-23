@@ -70,7 +70,7 @@ def main():
         text_dim=text_train_t.shape[1],
         imaging_dim=512,
     ).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
     criterion = nn.CrossEntropyLoss()
 
     print("Training fusion model...")
@@ -83,7 +83,11 @@ def main():
         optimizer.step()
         if (epoch + 1) % 5 == 0 or epoch == 0:
             train_acc = (outputs.argmax(1) == y_train_t).float().mean().item()
-            print(f"  epoch {epoch+1}/{EPOCHS}  loss={loss.item():.4f}  train_acc={train_acc:.4f}")
+            model.eval()
+            with torch.no_grad():
+                test_outputs_check = model(tabular_test_t, text_test_t, test_img_embeds)
+                test_acc_check = (test_outputs_check.argmax(1) == y_test_t).float().mean().item()
+            print(f"  epoch {epoch+1}/{EPOCHS}  loss={loss.item():.4f}  train_acc={train_acc:.4f}  test_acc={test_acc_check:.4f}")
 
     print("\nEvaluating on held-out test set...")
     model.eval()
