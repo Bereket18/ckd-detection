@@ -1,25 +1,15 @@
 # EthioCKD-Agent
 
 **Federated Multimodal Learning for Early Detection of Chronic Kidney
-Disease** — CoSc 3101 (Automata and Computability Theory), Group 1
+Disease**
 
 A fully offline, Python command-line AI agent that collects patient
 data conversationally, predicts Chronic Kidney Disease (CKD) risk,
 and explains the prediction in plain language. No web frontend, no
-backend server — deliberately, so it runs anywhere without a
+backend server deliberately, so it runs anywhere without a
 persistent internet connection.
 
 **Status: all 7 planned sprints complete.** See Results below.
-
-## Team
-
-| Name | ID |
-|---|---|
-| Adamaki Adugna | 16/140/23 |
-| Alemtsehay Girma | 16/082/23 |
-| Bereket Adamseged | 16/083/23 |
-| Eyerusalem Elias | 16/097/23 |
-| Zenebech Wenbito | 16/098/23 |
 
 ## Results at a glance
 
