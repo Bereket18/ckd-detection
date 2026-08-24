@@ -1,27 +1,25 @@
 # Heavier requirements — only needed from Sprint 3 onward
-# (imaging CNN, federated learning, explainability, text embeddings).
+# (imaging CNN, federated learning, explainability).
 # These are split out so early sprints don't force a slow install.
 # Install with: pip install -r requirements.txt -r requirements-advanced.txt
 #
 # NOTE: torch is large — for the imaging CNN (Sprint 3) and federated
 # simulation (Sprint 5), prefer running on Google Colab (free GPU)
 # rather than a laptop CPU.
+#
+# torch/torchvision are pinned to their BASE versions. The working environment
+# has 2.13.0+cpu / 0.28.0+cpu, but a "+cpu" local version tag only resolves
+# against the PyTorch CPU wheel index, not PyPI -- pinning it verbatim would
+# make this file uninstallable on Linux/CI. To get the CPU wheels explicitly:
+#   pip install -r requirements-advanced.txt \
+#       --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Deep learning (Sprint 3-4: imaging + fusion model)
-torch>=2.1
-torchvision>=0.16
+torch==2.13.0
+torchvision==0.28.0
 
 # Federated learning simulation (Sprint 5)
-flwr>=1.7
+flwr==1.33.0
 
 # Explainability (Sprint 6)
-shap>=0.44
-
-# Text modality upgrade path beyond TF-IDF (Sprint 3, optional)
-sentence-transformers>=2.2
-
-# Experiment tracking — accuracy-per-round charts for the defense (optional)
-mlflow>=2.9
-
-# Only needed if you build the LLM-agent upgrade (Sprint 6, optional)
-anthropic>=0.34
+shap==0.51.0
