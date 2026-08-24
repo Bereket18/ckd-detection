@@ -131,7 +131,7 @@ src/
     chatbot.py                         # the conversational interface — the only user-facing layer
 scripts/                                # one entry point per training/data task
 notebooks/                              # executed exploratory data analysis
-tests/                                  # pytest — 127 tests across every module
+tests/                                  # pytest — 134 tests across every module
 saved_models/                           # trained models + measured metrics (regenerable, not committed — see .gitignore)
 data/README.md                          # data sourcing, licensing, and how to add a dataset
 AUDIT.md                                # engineering audit + full record of every fix applied

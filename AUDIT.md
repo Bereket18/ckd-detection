@@ -304,9 +304,10 @@ gap — not a theoretical one.
 **Evidence.** No `.github/workflows/` directory; no CI configuration of any
 kind.
 
-**Impact.** 62 tests exist and nothing enforces them. P0-1 (a Makefile that
-does not parse) and P0-6 (tests that are never collected) are both exactly the
-class of breakage a 20-line CI workflow catches on the first push.
+**Impact.** 62 tests existed at audit time and nothing enforced them (134 now).
+P0-1 (a Makefile that does not parse) and P0-6 (tests that are never collected)
+are both exactly the class of breakage a 20-line CI workflow catches on the
+first push.
 
 ---
 
