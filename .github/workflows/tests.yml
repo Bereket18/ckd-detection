@@ -1,0 +1,49 @@
+name: tests
+
+# P1-3 from AUDIT.md: the suite had 62 tests that nothing ran automatically.
+# Both P0-1 (a Makefile that did not parse) and P0-6 (two tests placed after
+# __main__, so pytest never collected them) would have been caught on the first
+# push if this file had existed.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.11 matches the development environment the reported metrics were
+      # measured in. Pinned requirements are meaningless if the interpreter
+      # floats.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-advanced.txt
+
+      # Both requirements files, deliberately. No test imports torch, so a
+      # torch-free install would be faster -- but then CI would be validating
+      # an install path the README never tells anyone to use, which is exactly
+      # how P0-1 survived: nothing ever executed the documented path.
+      #
+      # The CPU wheel index is a CI-only flag: on Linux, plain `pip install
+      # torch` pulls the ~2 GB CUDA build, which this project never needs.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-advanced.txt \
+            --extra-index-url https://download.pytorch.org/whl/cpu
+
+      # data/raw/uci_ckd.csv is committed (public, anonymized, CC BY 4.0), so
+      # the tests that train on real data run here unchanged. The Kaggle CT
+      # images are NOT committed -- tests/test_pair_modalities.py builds a mock
+      # image directory under tmp_path, so it does not need them.
+      - name: Run tests
+        run: pytest -v

@@ -68,7 +68,12 @@ def load_frozen_imaging_encoder(weights_path, device):
     """
     model = models.resnet18(weights=None)
     model.fc = nn.Linear(model.fc.in_features, 4)
-    model.load_state_dict(torch.load(weights_path, map_location=device))
+    # weights_only=True: this file only ever contains a state_dict (plain
+    # tensors), which is exactly what weights_only supports. Without it,
+    # torch.load unpickles arbitrary objects, so a checkpoint received from
+    # anywhere else -- a teammate, Colab, a shared drive -- could execute
+    # code on load. Nothing here needs that capability. See AUDIT.md (P1-6).
+    model.load_state_dict(torch.load(weights_path, map_location=device, weights_only=True))
     model.fc = nn.Identity()
     for param in model.parameters():
         param.requires_grad = False

@@ -8,8 +8,10 @@ https://doi.org/10.24432/C5G020 (CC BY 4.0). Retrieved via a GitHub
 mirror of the original CSV, since the UCI archive itself isn't reachable
 from every network environment.
 
-fetch_ethiopian_ckd() remains a placeholder for the St. Paul's Hospital
-dataset, once/if access is granted by its authors — see data/README.md.
+These are the two named, hardcoded loaders. Anything beyond them goes through
+src/data/datasets.py, which maps an arbitrary CSV onto the same column contract
+via a DatasetSpec -- adding a third source should not mean adding a third
+fetch_* function here.
 """
 
 from pathlib import Path
@@ -32,11 +34,21 @@ def fetch_uci_ckd():
 
 def fetch_ethiopian_ckd():
     """
-    TODO: once the St. Paul's Hospital dataset is obtained, load it
-    here with the same column contract as fetch_uci_ckd() so downstream
-    code (cleaning, training, federated partitioning) doesn't need to
-    care which source it's reading.
+    Load the St. Paul's Hospital (Addis Ababa) CKD dataset, if it has been
+    obtained -- see data/README.md.
+
+    No longer a NotImplementedError stub: the mapping onto this project's column
+    contract now exists as the `ethiopian` DatasetSpec in src/data/datasets.py,
+    so the only thing still missing is the file. That distinction matters,
+    because NotImplementedError said "nobody has written this yet" when the
+    truth is "the code is here and tested; the data has been requested and has
+    not arrived." Whoever receives the CSV drops it at the reported path and
+    checks the spec's column_map against its real headers.
+
+    Raises FileNotFoundError naming the expected path, which is a message
+    someone can act on.
     """
-    raise NotImplementedError(
-        "Ethiopian dataset not yet obtained — see data/README.md"
-    )
+    from src.data.datasets import load_dataset
+
+    df, _coverage = load_dataset("ethiopian")
+    return df

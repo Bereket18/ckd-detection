@@ -137,3 +137,132 @@ def test_saved_preprocessor_roundtrips_through_joblib(tmp_path):
     after = reloaded.transform(encoded_rows)
     assert list(before.columns) == config.FEATURE_COLUMNS
     assert (before.values == after.values).all()
+
+
+# ---------------------------------------------------------------------------
+# Confidence intervals
+#
+# AUDIT.md's most valuable open recommendation: every metric here is measured on
+# 80 rows, so a bare "97.50%" implies a precision the sample size cannot
+# support. These tests pin the properties that make the interval trustworthy.
+# ---------------------------------------------------------------------------
+
+def test_wilson_interval_stays_finite_at_a_perfect_proportion():
+    """
+    THE reason Wilson was chosen over the textbook Wald interval: the tuned
+    model's measured recall is exactly 100%. At p = 1.0 the Wald half-width is
+    sqrt(p(1-p)/n) = 0, so Wald would report [100%, 100%] from 50 positive
+    cases -- a claim of certainty that is simply false. Wilson must not.
+    """
+    low, high = tabular_model.wilson_interval(50, 50)
+    assert high == 1.0
+    assert low < 1.0
+    # 50/50 successes supports roughly "at least 93%", not "exactly 100%".
+    assert 0.90 < low < 0.95
+
+
+def test_wilson_interval_stays_finite_at_a_zero_proportion():
+    """The mirror case: 0/50 is not proof of impossibility."""
+    low, high = tabular_model.wilson_interval(0, 50)
+    assert low == 0.0
+    assert 0.0 < high < 0.10
+
+
+def test_wilson_interval_is_centred_and_symmetric_at_one_half():
+    low, high = tabular_model.wilson_interval(40, 80)
+    assert low < 0.5 < high
+    assert (0.5 - low) == pytest.approx(high - 0.5, abs=1e-9)
+
+
+def test_wilson_interval_narrows_as_the_sample_grows():
+    """The whole claim of the interval: more data, less uncertainty."""
+    small = tabular_model.wilson_interval(78, 80)
+    large = tabular_model.wilson_interval(780, 800)
+    assert (large[1] - large[0]) < (small[1] - small[0])
+
+
+def test_wilson_interval_never_escapes_zero_to_one():
+    for successes, n in [(0, 1), (1, 1), (1, 2), (3, 4), (99, 100)]:
+        low, high = tabular_model.wilson_interval(successes, n)
+        assert 0.0 <= low <= high <= 1.0
+
+
+def test_wilson_interval_with_no_observations_claims_nothing():
+    """An empty denominator carries no information, so the interval is the
+    whole range rather than a spurious point at zero."""
+    assert tabular_model.wilson_interval(0, 0) == (0.0, 1.0)
+
+
+def test_evaluate_brackets_every_point_estimate_with_its_interval(split, tuned_model):
+    """
+    The intervals are derived from the confusion matrix rather than recomputed,
+    so they cannot drift out of sync with the numbers they qualify. Each point
+    estimate must fall inside its own interval.
+    """
+    _, X_test, _, y_test = split
+    results = tabular_model.evaluate(tuned_model, X_test, y_test)
+
+    assert set(results["intervals"]) == {
+        "accuracy", "recall", "precision", "specificity"
+    }
+    for metric, (low, high) in results["intervals"].items():
+        assert low <= results[metric] <= high, metric
+    assert results["n_test"] == len(y_test)
+
+
+def test_evaluate_denominators_match_the_confusion_matrix(split, tuned_model):
+    """
+    Each rate has a different denominator -- recall is measured only on actual
+    CKD patients, precision only on predicted-positive ones -- so a shared
+    denominator would silently understate precision's uncertainty.
+    """
+    _, X_test, _, y_test = split
+    results = tabular_model.evaluate(tuned_model, X_test, y_test)
+    (tn, fp), (fn, tp) = results["confusion_matrix"]
+
+    assert results["intervals"]["recall"] == tabular_model.wilson_interval(tp, tp + fn)
+    assert results["intervals"]["precision"] == tabular_model.wilson_interval(tp, tp + fp)
+    assert results["intervals"]["specificity"] == tabular_model.wilson_interval(tn, tn + fp)
+    assert results["specificity"] == pytest.approx(tn / (tn + fp))
+
+
+def test_saved_metrics_carry_intervals_and_provenance(split, tuned_model, tmp_path):
+    """
+    A metrics file that does not say which data produced it is a number with no
+    claim attached -- and that matters now that a model can be trained on
+    something other than UCI. See scripts/train_baseline.py --dataset.
+    """
+    _, X_test, _, y_test = split
+    results = tabular_model.evaluate(tuned_model, X_test, y_test)
+    provenance = {"datasets": ["uci"], "n_features": 24}
+
+    path = tmp_path / "metrics.json"
+    tabular_model.save_metrics("logistic_regression", results, path, provenance=provenance)
+    loaded = tabular_model.load_metrics(path)
+
+    assert loaded["provenance"] == provenance
+    assert loaded["n_test"] == len(y_test)
+    for metric, bounds in loaded["intervals"].items():
+        assert bounds == list(results["intervals"][metric])
+
+
+# ---------------------------------------------------------------------------
+# Training history
+# ---------------------------------------------------------------------------
+
+def test_metrics_history_is_append_only(tmp_path):
+    """
+    "Did feeding the model more data help?" is only answerable if earlier runs
+    survive later ones -- including the disappointing runs, which is why
+    train_baseline.py logs rejected runs too.
+    """
+    path = tmp_path / "history.jsonl"
+    assert tabular_model.load_metrics_history(path) == []
+
+    tabular_model.append_metrics_history({"run": 1, "recall": 0.98}, path)
+    tabular_model.append_metrics_history({"run": 2, "recall": 0.80, "saved": False}, path)
+    history = tabular_model.load_metrics_history(path)
+
+    assert [entry["run"] for entry in history] == [1, 2]
+    assert history[1]["saved"] is False
+

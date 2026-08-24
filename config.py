@@ -25,8 +25,42 @@ TABULAR_PREPROCESSOR_PATH = SAVED_MODELS_DIR / "tabular_preprocessor.joblib"
 # hardcode its accuracy, which silently became false the moment the
 # pipeline changed. They now read this file. See AUDIT.md (P1-1).
 TABULAR_METRICS_PATH = SAVED_MODELS_DIR / "tabular_metrics.json"
+# A saved sample of training rows for SHAP to explain against. The agent used
+# to rebuild this by re-running the whole load/encode/split pipeline on every
+# consultation. The reason for saving it is correctness rather than speed: the
+# recompute always rebuilt the background from UCI, so a model trained on any
+# other dataset would have been explained against the wrong reference
+# distribution. Measured, the recompute cost 0.31 s, not the "~10 s" AUDIT.md
+# P1-5 originally estimated -- see the correction recorded there.
+SHAP_BACKGROUND_PATH = SAVED_MODELS_DIR / "shap_background.joblib"
+# Append-only log of every training run: which datasets, how many rows and
+# features, and the resulting metrics. This is what makes "did feeding the
+# model more data actually help?" an answerable question instead of a guess.
+METRICS_HISTORY_PATH = SAVED_MODELS_DIR / "metrics_history.jsonl"
 IMAGING_MODEL_PATH = SAVED_MODELS_DIR / "imaging_model.pt"
 FUSION_MODEL_PATH = SAVED_MODELS_DIR / "fusion_model.pt"
+
+
+def artifact_paths(suffix: str = "") -> dict:
+    """
+    The four files that together make up one trained tabular bundle.
+
+    suffix="" gives the default bundle -- the one src/agent/chatbot.py loads.
+    Passing a suffix (train_baseline.py --out-suffix) keeps an experimental run,
+    e.g. a model trained on a combined multi-dataset feature intersection, from
+    overwriting the model being demonstrated.
+
+    All four must be written together: a model without its matching
+    preprocessor cannot transform patient input, and a background sample from a
+    different feature set would produce meaningless SHAP attributions.
+    """
+    tag = f"_{suffix}" if suffix else ""
+    return {
+        "model": SAVED_MODELS_DIR / f"tabular_model{tag}.joblib",
+        "preprocessor": SAVED_MODELS_DIR / f"tabular_preprocessor{tag}.joblib",
+        "metrics": SAVED_MODELS_DIR / f"tabular_metrics{tag}.json",
+        "shap_background": SAVED_MODELS_DIR / f"shap_background{tag}.joblib",
+    }
 
 # ---------------------------------------------------------------------------
 # UCI Chronic Kidney Disease dataset — column reference
@@ -59,18 +93,29 @@ TARGET_COLUMN = "class"  # values: "ckd" / "notckd" (a couple of rows have a str
 
 FEATURE_COLUMNS = NUMERIC_COLUMNS + BINARY_COLUMNS
 
-# Human-readable prompts for the chatbot agent (Sprint 6) — one per feature.
-# Fill these in properly once the real question wording is decided; keep
-# them here (not hardcoded in agent/chatbot.py) so both the data pipeline
-# and the agent read from a single source of truth.
-FEATURE_PROMPTS = {col: f"Enter value for '{col}': " for col in FEATURE_COLUMNS}
-
 # ---------------------------------------------------------------------------
 # Reproducibility
 # ---------------------------------------------------------------------------
 RANDOM_SEED = 42
 TEST_SIZE = 0.2
 
+# The PRD's MVP success bar for recall, and the gate train_baseline.py applies
+# before it will overwrite the saved model. Recall specifically (not accuracy):
+# a missed CKD case is the costly error for a screening tool, so that is the
+# number a retrain on new data must not quietly regress.
+#
+# tests/test_tabular_model.py asserts the same bar, so a code change that
+# regresses the model fails the suite and a data change that regresses it is
+# refused at training time.
+MIN_ACCEPTABLE_RECALL = 0.90
+
+# Human-readable prompts for the chatbot agent (Sprint 6) — one per feature.
+# Kept here rather than in agent/chatbot.py so the data pipeline and the
+# agent read feature names from a single source of truth.
+#
+# There used to be a placeholder version of this dict defined ABOVE, which
+# this one silently shadowed — so the placeholder was dead code that read
+# like live code. See AUDIT.md (P2-1).
 FEATURE_PROMPTS = {
     "age": "What is your age (in years)?",
     "bp": "What is your blood pressure (diastolic, mm/Hg)?",
