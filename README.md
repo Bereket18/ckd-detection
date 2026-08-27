@@ -228,9 +228,15 @@ unanswerable: *how does this model do on data it was not trained on?*
 
 ```bash
 python scripts/predict.py --input patients.csv --output scored.csv
-python scripts/predict.py --input clinic_export.csv --dataset clinic   # apply a DatasetSpec's mapping
-python scripts/predict.py --input patients.csv --explain               # top-3 SHAP drivers per row
+python scripts/predict.py --input export.csv --dataset ethiopian   # apply that spec's column mapping
+python scripts/predict.py --input patients.csv --explain           # top-3 SHAP drivers per row
 ```
+
+`--input` names the file to read; `--dataset` names a **registered
+`DatasetSpec`** whose `column_map` / `value_map` is applied to it, so a foreign
+export is mapped by the spec that already describes that source rather than by
+renaming headers by hand. `python scripts/train_baseline.py --list-datasets`
+prints what is registered (`uci` and the `ethiopian` placeholder).
 
 It appends `prediction`, `p_ckd`, `risk_band`, and **`n_imputed`** to every input
 row. That last column is not bookkeeping: a nearly empty row otherwise gets a
@@ -265,7 +271,8 @@ src/
     load_imaging.py              # Kaggle CT dataset fetch + train/val/test organization
     pair_modalities.py            # synthetic tabular-imaging pairing for fusion (documented simulation)
   models/
-    tabular_model.py              # baseline: candidate comparison, tuning, evaluation, Wilson intervals
+    tabular_model.py              # baseline: candidate comparison, tuning, evaluation, Wilson intervals,
+                                  #   risk bands, Brier score, threshold sweep
     imaging_model.py               # ResNet-18 transfer learning (CNN)
     text_model.py                   # synthetic clinical notes + TF-IDF encoding
     fusion_model.py                  # multimodal fusion architecture
@@ -275,13 +282,19 @@ src/
   explain/
     shap_utils.py                     # SHAP-based prediction explanations
   agent/
-    chatbot.py                         # the conversational interface — the only user-facing layer
-scripts/                                # one entry point per training/data task
-notebooks/                              # executed exploratory data analysis
-tests/                                  # pytest — 134 tests across every module
-saved_models/                           # trained models + measured metrics (regenerable, not committed — see .gitignore)
-data/README.md                          # data sourcing, licensing, and how to add a dataset
-AUDIT.md                                # engineering audit + full record of every fix applied
+    dialogue_fsm.py                    # the questionnaire as an explicit DFA — the spec the loop executes
+    chatbot.py                          # the conversational interface — the only user-facing layer
+scripts/
+  train_baseline.py                     # trains, evaluates, gates on recall, saves metrics + provenance
+  predict.py                             # batch scoring: score a CSV, and evaluate it if it has labels
+  make_model_card.py                      # regenerates MODEL_CARD.md from the metrics file (--check in CI)
+  ...                                      # one entry point per remaining training/data task
+notebooks/                               # executed exploratory data analysis
+tests/                                   # pytest — 242 tests across every module
+MODEL_CARD.md                            # generated: intended use, measured performance, limitations
+saved_models/                            # trained models + measured metrics (regenerable, not committed — see .gitignore)
+data/README.md                           # data sourcing, licensing, and how to add a dataset
+AUDIT.md                                 # engineering audit + full record of every fix applied
 ```
 
 ## Data sources
