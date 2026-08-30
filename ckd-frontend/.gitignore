@@ -31,3 +31,14 @@ coverage
 *.sln
 *.sw?
 
+# Temporary task completion files
+TASK_*.md
+SETUP_COMPLETE.md
+
+# Corrupted files (need manual fixing - see CORRUPTED_FILES.md)
+src/services/api.ts
+src/services/error-handler.ts
+src/services/*.test.ts
+
+# Python scripts (should not be in frontend)
+*.py
