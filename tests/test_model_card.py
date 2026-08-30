@@ -135,7 +135,9 @@ def test_changing_the_metrics_file_changes_the_card(card_env, card):
     worse = {**METRICS, "accuracy": 0.5}
     regenerated = make_model_card.build_card(worse, metrics_path)
 
-    assert "0.9750" in card and "0.9750" not in regenerated
+    original_accuracy_row = f"| accuracy | {METRICS['accuracy']:.4f} |"
+    assert original_accuracy_row in card
+    assert original_accuracy_row not in regenerated
     assert "| accuracy | 0.5000 |" in regenerated
 
 

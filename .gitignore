@@ -12,10 +12,7 @@ venv/
 # Environment variables / secrets
 .env
 
-# Data (never commit REAL patient data — e.g. any future Ethiopian
-# hospital dataset stays out. Exception: the UCI CKD dataset is public,
-# anonymized, and CC-BY 4.0 licensed, so it's safe and useful to keep
-# in version control for reproducibility.)
+# Data (never commit REAL patient data)
 data/raw/*
 !data/raw/.gitkeep
 !data/raw/uci_ckd.csv
@@ -28,6 +25,21 @@ saved_models/*
 
 # MLflow local tracking
 mlruns/
+
+# Frontend (ckd-frontend/)
+ckd-frontend/node_modules/
+ckd-frontend/dist/
+ckd-frontend/.vite/
+ckd-frontend/coverage/
+ckd-frontend/.env
+ckd-frontend/.env.local
+ckd-frontend/.env.production
+ckd-frontend/*.log
+ckd-frontend/*.py
+
+# Kiro temp files
+.kiro/specs/**/TASK_*.md
+.kiro/specs/**/*.py
 
 # OS
 .DS_Store

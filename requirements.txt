@@ -21,5 +21,11 @@ matplotlib==3.11.1
 # Agent / CLI interface (Sprint 6)
 rich==14.3.4
 
+# HTTP API (verified clinical inference)
+fastapi==0.138.2
+uvicorn==0.49.0
+pydantic==2.13.4
+httpx==0.28.1
+
 # Testing (all sprints)
 pytest==9.1.1

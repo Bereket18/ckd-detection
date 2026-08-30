@@ -92,9 +92,13 @@ def explain_prediction(model, patient_row, feature_names, background_data, top_n
     unpolished in a live demo.
     """
     background_df = pd.DataFrame(background_data, columns=feature_names)
-    patient_df = pd.DataFrame([patient_row], columns=feature_names)
-
     explainer = get_explainer(model, background_df)
+    return explain_with_explainer(explainer, patient_row, feature_names, top_n=top_n)
+
+
+def explain_with_explainer(explainer, patient_row, feature_names, top_n=3):
+    """Explain one row with an already-created explainer."""
+    patient_df = pd.DataFrame([patient_row], columns=feature_names)
     shap_values = _positive_class_row(explainer.shap_values(patient_df))
 
     impacts = list(zip(feature_names, shap_values))

@@ -1,0 +1,540 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Set up project structure and development environment": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105474823
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105493506
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788106639360
+      }
+    ],
+    "2.1 Create API response types": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105475235
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788106644715
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788107817474
+      }
+    ],
+    "2.2 Create Zod validation schema for patient assessment": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105475422
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788106645611
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788107818170
+      }
+    ],
+    "2.3 Create field metadata configuration": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105475593
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788106646322
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788107818895
+      }
+    ],
+    "3.1 Create base APIClient class": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105475737
+      },
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788107829445
+      },
+      {
+        "executionId": "98e55b1b-99c2-4073-83f4-5ba59c4e2300",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788110411326
+      }
+    ],
+    "3.2 Implement API endpoint methods": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105475885
+      },
+      {
+        "executionId": "c11ee093-4b59-49b5-bb68-e6594bd27d9d",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788112116896
+      },
+      {
+        "executionId": "c11ee093-4b59-49b5-bb68-e6594bd27d9d",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788112740899
+      }
+    ],
+    "3.3 Implement error handling and mapping": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476043
+      },
+      {
+        "executionId": "c11ee093-4b59-49b5-bb68-e6594bd27d9d",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788112117345
+      },
+      {
+        "executionId": "c11ee093-4b59-49b5-bb68-e6594bd27d9d",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788112741613
+      }
+    ],
+    "4.1 Create NumericInput component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476223
+      },
+      {
+        "executionId": "c11ee093-4b59-49b5-bb68-e6594bd27d9d",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788112748370
+      }
+    ],
+    "4.3 Create CategoricalSelect component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476441
+      }
+    ],
+    "4.5 Create FormSection component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476570
+      },
+      {
+        "executionId": "c11ee093-4b59-49b5-bb68-e6594bd27d9d",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788112749184
+      }
+    ],
+    "5.1 Create AssessmentForm component structure": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476688
+      }
+    ],
+    "5.2 Render form sections with grouped fields": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476837
+      }
+    ],
+    "5.3 Implement real-time field validation": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105476954
+      }
+    ],
+    "5.4 Implement form submission": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477071
+      }
+    ],
+    "6. Checkpoint - Ensure form submission works end-to-end": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477205
+      }
+    ],
+    "7.1 Create PredictionBadge component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477366
+      }
+    ],
+    "7.2 Create RiskBandIndicator component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477474
+      }
+    ],
+    "7.4 Create ImputationWarning component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477597
+      }
+    ],
+    "7.5 Create ShapDriverItem component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477714
+      }
+    ],
+    "7.6 Create ShapDriverList component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477825
+      }
+    ],
+    "7.8 Create ResultsDisplay component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105477938
+      }
+    ],
+    "8.1 Create HealthMonitor component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478052
+      }
+    ],
+    "8.2 Create StatusBanner component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478172
+      }
+    ],
+    "8.3 Integrate health monitoring into App component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478333
+      }
+    ],
+    "9.1 Create BatchUpload component structure": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478454
+      }
+    ],
+    "9.2 Implement CSV file validation": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478558
+      }
+    ],
+    "9.3 Implement batch upload submission": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478669
+      }
+    ],
+    "9.4 Create BatchResultsTable component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478786
+      }
+    ],
+    "9.5 Implement batch results export": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105478908
+      }
+    ],
+    "10. Checkpoint - Ensure batch upload works end-to-end": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479109
+      }
+    ],
+    "11.1 Create Header component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479344
+      }
+    ],
+    "11.2 Create NavigationTabs component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479499
+      }
+    ],
+    "11.3 Create MainLayout component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479614
+      }
+    ],
+    "11.4 Create Footer component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479740
+      }
+    ],
+    "12.1 Create LoadingSpinner component": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479856
+      }
+    ],
+    "12.2 Integrate loading states into AssessmentForm": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105479982
+      }
+    ],
+    "12.3 Add visual feedback for button clicks": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480108
+      }
+    ],
+    "13.1 Create App component with global state": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480238
+      }
+    ],
+    "13.2 Wire components together in App": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480352
+      }
+    ],
+    "13.3 Add error boundary for application errors": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480549
+      }
+    ],
+    "14.1 Add ARIA labels to all interactive elements": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480708
+      }
+    ],
+    "14.2 Implement keyboard navigation": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480847
+      }
+    ],
+    "14.3 Ensure color contrast compliance": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105480980
+      }
+    ],
+    "15.1 Set up global styles and CSS variables": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481115
+      }
+    ],
+    "15.2 Implement responsive grid layouts": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481238
+      }
+    ],
+    "15.3 Style form components": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481354
+      }
+    ],
+    "15.4 Style results display components": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481474
+      }
+    ],
+    "16.1 Implement getModelMetadata in API client": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481589
+      }
+    ],
+    "16.2 Display metadata in Footer": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481703
+      }
+    ],
+    "17.1 Save form data to sessionStorage": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481816
+      }
+    ],
+    "17.2 Restore form data on page load": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105481936
+      }
+    ],
+    "18.1 Create ValidationService class": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482122
+      }
+    ],
+    "18.2 Integrate coherence checks into AssessmentForm": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482239
+      }
+    ],
+    "19.1 Create error logging utility": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482371
+      }
+    ],
+    "19.2 Integrate error logging throughout app": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482489
+      }
+    ],
+    "20.1 Test complete single assessment workflow": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482604
+      }
+    ],
+    "20.2 Test complete batch assessment workflow": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482722
+      }
+    ],
+    "20.3 Test error handling scenarios": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482843
+      }
+    ],
+    "20.4 Test responsive behavior": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105482966
+      }
+    ],
+    "20.5 Test accessibility compliance": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105483083
+      }
+    ],
+    "21.1 Write README.md": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105483204
+      }
+    ],
+    "21.2 Create build configuration": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105483322
+      }
+    ],
+    "21.3 Add deployment documentation": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105483442
+      }
+    ],
+    "22. Final checkpoint - Complete verification": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788105483562
+      }
+    ],
+    "2. Define TypeScript types and validation schemas": [
+      {
+        "executionId": "9ad60b2c-a6fe-4b8e-85e0-694a6d8aeea5",
+        "chatSessionId": "sess_9a52886d-d03e-446a-9d39-1861bcf4f187",
+        "timestamp": 1788107819048
+      }
+    ]
+  }
+}
