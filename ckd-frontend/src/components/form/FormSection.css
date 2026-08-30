@@ -1,0 +1,90 @@
+.form-section {
+  margin-bottom: 2rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-section-header {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 1rem;
+}
+
+.form-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333333;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-section-toggle {
+  font-size: 0.875rem;
+  color: #666666;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+  user-select: none;
+  outline: none;
+}
+
+.form-section-toggle:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.form-section-toggle.expanded {
+  transform: rotate(0deg);
+}
+
+.form-section-toggle.collapsed {
+  transform: rotate(-90deg);
+}
+
+.form-section-description {
+  font-size: 0.875rem;
+  color: #666666;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.5;
+}
+
+.form-section-content {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+/* Responsive grid layouts */
+/* Single column for mobile (< 768px) - default above */
+
+/* Two columns for tablet and small desktop (>= 768px and < 1440px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .form-section-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Three columns for larger desktop (>= 1440px) */
+@media (min-width: 1440px) {
+  .form-section-content {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Two columns for screens wider than 1024px but less than 1440px */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .form-section-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Ensure minimum font size compliance (WCAG) */
+.form-section * {
+  min-height: 0;
+  min-width: 0;
+}

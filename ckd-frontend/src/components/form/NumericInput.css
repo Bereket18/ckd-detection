@@ -1,0 +1,249 @@
+/**
+ * NumericInput Component Styles
+ * 
+ * Provides styling for numeric input fields with:
+ * - Validation states (error, focus, filled)
+ * - Tooltip display
+ * - Clear button
+ * - Unit label display
+ * - Accessible color contrast (WCAG 2.1 AA)
+ */
+
+.numeric-input {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Label */
+.numeric-input__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.numeric-input__unit {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+
+/* Input Wrapper */
+.numeric-input__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Input Field */
+.numeric-input__field {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #1f2937;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease-in-out;
+  font-family: inherit;
+}
+
+/* Remove number input arrows for a cleaner look (optional) */
+.numeric-input__field::-webkit-inner-spin-button,
+.numeric-input__field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numeric-input__field[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Placeholder */
+.numeric-input__field::placeholder {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* Focus State */
+.numeric-input__field:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.numeric-input__field--focused {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Filled State */
+.numeric-input__field--filled {
+  background-color: #f9fafb;
+  padding-right: 2.5rem; /* Make room for clear button */
+}
+
+/* Error State */
+.numeric-input__field--error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.numeric-input__field--error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Disabled State */
+.numeric-input__field:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Clear Button */
+.numeric-input__clear-button {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb;
+  border: none;
+  border-radius: 50%;
+  color: #6b7280;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  padding: 0;
+  font-family: inherit;
+}
+
+.numeric-input__clear-button:hover {
+  background-color: #d1d5db;
+  color: #374151;
+}
+
+.numeric-input__clear-button:active {
+  background-color: #9ca3af;
+  color: #1f2937;
+}
+
+.numeric-input__clear-button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Error Message */
+.numeric-input__error {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  line-height: 1.4;
+  margin-top: -0.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.numeric-input__error::before {
+  content: '⚠';
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+
+/* Tooltip */
+.numeric-input__tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background-color: #1f2937;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+  pointer-events: none;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+/* Tooltip arrow */
+.numeric-input__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 1rem;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #1f2937;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .numeric-input__label {
+    font-size: 0.8125rem;
+  }
+
+  .numeric-input__field {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.625rem;
+  }
+
+  .numeric-input__tooltip {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.625rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .numeric-input__field {
+    border-width: 2px;
+  }
+
+  .numeric-input__field:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .numeric-input__error {
+    font-weight: 600;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .numeric-input__field,
+  .numeric-input__clear-button,
+  .numeric-input__tooltip {
+    transition: none;
+    animation: none;
+  }
+}
