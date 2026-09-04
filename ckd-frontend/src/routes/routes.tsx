@@ -10,6 +10,7 @@ import LearnRoute from './LearnRoute';
 import ModelCardRoute from './ModelCardRoute';
 import MultimodalRoute from './MultimodalRoute';
 import NotFoundRoute from './NotFoundRoute';
+import ReportRoute from './ReportRoute';
 import ResearchBatchRoute from './ResearchBatchRoute';
 import ResearchRoute from './ResearchRoute';
 import ResultsRoute from './ResultsRoute';
@@ -45,6 +46,7 @@ export const ROUTES: RouteObject[] = [
       { path: 'assessment', element: <AssessmentRoute />, errorElement: <RouteErrorPage /> },
       { path: 'results', element: <ResultsRoute />, errorElement: <RouteErrorPage /> },
       { path: 'explainability', element: <ExplainabilityRoute />, errorElement: <RouteErrorPage /> },
+      { path: 'report', element: <ReportRoute />, errorElement: <RouteErrorPage /> },
       { path: 'learn', element: <LearnRoute />, errorElement: <RouteErrorPage /> },
       { path: 'multimodal', element: <MultimodalRoute />, errorElement: <RouteErrorPage /> },
       { path: 'federated', element: <FederatedRoute />, errorElement: <RouteErrorPage /> },

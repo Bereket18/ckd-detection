@@ -89,9 +89,23 @@ export function useHealth(): HealthStatus {
 export function useModelMetadata(): UseQueryResult<ModelView, NormalizedError> {
   return useQuery({
     queryKey: queryKeys.model,
-    queryFn: async ({ signal }) => toModelView(await apiClient.getModelMetadata({ signal })),
+    // Normalized here, not at each call site: the return type promises consumers a
+    // `NormalizedError`, and a cast alone would have made that true only for the
+    // compiler — `ErrorState` would have received a raw `APIError` and rendered an
+    // empty panel. Same pattern the mutations use.
+    queryFn: async ({ signal }) => {
+      try {
+        return toModelView(await apiClient.getModelMetadata({ signal }));
+      } catch (error) {
+        throw normalizeError(error);
+      }
+    },
+    // §7.3 unchanged, restated against the normalized shape: 4xx never (not
+    // retryable), timeouts never automatically, network and 5xx twice.
+    retry: (failureCount, error: NormalizedError) =>
+      error.kind !== 'timeout' && error.retryable && failureCount < 2,
     throwOnError: false,
-  }) as UseQueryResult<ModelView, NormalizedError>;
+  });
 }
 
 /**

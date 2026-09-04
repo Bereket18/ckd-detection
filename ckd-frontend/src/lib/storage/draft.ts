@@ -41,20 +41,20 @@ function isDraftValue(value: unknown): value is DraftValue {
 }
 
 /**
- * Read the draft, keeping only keys in `allowedKeys` — the field list from
- * `/model.feature_schema`.
+ * Read the draft with no schema knowledge at all: every primitive-valued key that
+ * is on disk, or `null`.
  *
- * Filtering on read rather than trusting what is on disk matters: a draft
- * written before a backend schema change would otherwise reintroduce a field the
- * model no longer accepts, and the request would fail with `extra_forbidden`.
+ * Exists for one caller — the assessment form's initial state, which is created
+ * before `/model` has answered and therefore has no field list to filter against.
+ * That is safe because filtering happens on every path *out* of the form state:
+ * the request payload is built from `feature_schema`, and {@link writeDraft} drops
+ * unknown keys on the way back to disk. A key the model no longer accepts can sit
+ * inertly in form state; it cannot reach the API.
  */
-export function readDraft(allowedKeys: readonly string[]): Draft | null {
+export function readDraftRaw(): Draft | null {
   const store = storage();
   if (!store) return null;
 
-  // `getItem` itself throws in a storage-disabled profile — not only the write
-  // path. Guarding one and not the other would make a resumable draft the thing
-  // that breaks the assessment.
   let raw: string | null;
   try {
     raw = store.getItem(DRAFT_KEY);
@@ -67,7 +67,6 @@ export function readDraft(allowedKeys: readonly string[]): Draft | null {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    // Corrupt value: remove it rather than leaving a landmine for the next read.
     clearDraft();
     return null;
   }
@@ -77,13 +76,33 @@ export function readDraft(allowedKeys: readonly string[]): Draft | null {
     return null;
   }
 
-  const allowed = new Set(allowedKeys);
   const draft: Draft = {};
   for (const [key, value] of Object.entries(parsed)) {
-    if (allowed.has(key) && isDraftValue(value)) draft[key] = value;
+    if (isDraftValue(value)) draft[key] = value;
   }
   return Object.keys(draft).length > 0 ? draft : null;
 }
+
+/**
+ * Read the draft, keeping only keys in `allowedKeys` — the field list from
+ * `/model.feature_schema`.
+ *
+ * Filtering on read rather than trusting what is on disk matters: a draft
+ * written before a backend schema change would otherwise reintroduce a field the
+ * model no longer accepts, and the request would fail with `extra_forbidden`.
+ */
+export function readDraft(allowedKeys: readonly string[]): Draft | null {
+  const raw = readDraftRaw();
+  if (raw === null) return null;
+
+  const allowed = new Set(allowedKeys);
+  const draft: Draft = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (allowed.has(key)) draft[key] = value;
+  }
+  return Object.keys(draft).length > 0 ? draft : null;
+}
+
 
 /** Write the draft, keeping only known keys and primitive values. */
 export function writeDraft(draft: Draft, allowedKeys: readonly string[]): void {

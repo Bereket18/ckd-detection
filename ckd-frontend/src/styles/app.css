@@ -221,3 +221,75 @@
     }
   }
 }
+
+/**
+ * Print.
+ *
+ * There is no backend report endpoint, so the printable report is generated in the
+ * browser from the response the user already holds (backend dependency D7). "Print"
+ * therefore means "produce the document", and every browser's print dialogue offers
+ * *Save as PDF* — which is how a screening report leaves this application without a
+ * server ever holding a copy of it.
+ *
+ * `.no-print` is applied to application chrome: the header, the sidebar, the health
+ * banner, the footer, and every on-screen control. What remains is the document.
+ * Backgrounds are dropped and borders kept, because a colour-filled panel that a
+ * printer renders as grey wash is harder to read on paper than a ruled box — and the
+ * band word is never carried by colour alone anyway, so nothing is lost.
+ */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+
+  /* The shell's min-height and sticky positioning both break pagination. */
+  body * {
+    position: static !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /* Keep a block and its heading together; never split a table row. */
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  tr,
+  li,
+  .print-keep {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  /* A printed link showing only "here" is useless; expose the target once. */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  @page {
+    margin: 16mm 14mm;
+  }
+}

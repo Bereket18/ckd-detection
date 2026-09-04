@@ -19,11 +19,25 @@
  */
 
 import { createContext, useContext } from 'react';
-import type { PredictionView } from '../../types/api.types';
+import type { PatientAssessment, PredictionView } from '../../types/api.types';
 
 export interface PredictionState {
   /** The prediction being viewed, or `null` before one has been made. */
   prediction: PredictionView | null;
+  /**
+   * The answers that produced it, held under the same rules as the prediction.
+   *
+   * Explainability has to show the patient's own value beside each SHAP driver
+   * (R4.4), and the response does not echo the submitted values back — a driver
+   * arrives as `{feature: 'hemo', value: -0.21, direction: 'raises_risk'}` with no
+   * indication of what `hemo` was. Naming a driver without its value tells someone
+   * that haemoglobin mattered while withholding the only part they could act on.
+   *
+   * Stored here rather than re-read from the draft because the draft is deleted on
+   * submit (§8.5), and it is the *submitted* values that must be shown — not
+   * whatever the form happens to contain afterwards.
+   */
+  assessment: PatientAssessment | null;
   /**
    * When the held prediction was received, as an epoch millisecond value.
    * Results shows it so a user who navigates back after a while can tell whether
@@ -31,8 +45,14 @@ export interface PredictionState {
    * same session.
    */
   receivedAt: number | null;
-  /** Replace the held prediction. Accepts an already-projected view. */
-  setPrediction: (prediction: PredictionView) => void;
+  /**
+   * Replace the held prediction. Accepts an already-projected view.
+   *
+   * The assessment is optional so that a caller with nothing to pass cannot be
+   * forced to invent one; omitting it clears any previously held answers rather
+   * than leaving the last set attached to a new result.
+   */
+  setPrediction: (prediction: PredictionView, assessment?: PatientAssessment) => void;
   /** Discard it — on *Start over*, and whenever the assessment is reset. */
   clearPrediction: () => void;
 }

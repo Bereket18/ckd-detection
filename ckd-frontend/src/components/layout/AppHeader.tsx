@@ -26,7 +26,7 @@ export function AppHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 border-b border-border bg-surface/95 no-print backdrop-blur-sm">
       <Container width="wide" className="flex min-h-16 items-center justify-between gap-3 py-2">
         <Link
           to="/"

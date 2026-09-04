@@ -12,7 +12,7 @@ import { NAV_GROUPS } from './nav';
  */
 export function AppFooter() {
   return (
-    <footer className="mt-16 border-t border-border bg-surface-sunken">
+    <footer className="mt-16 border-t border-border bg-surface-sunken no-print">
       <Container width="wide" className="space-y-8 py-10">
         <p className="max-w-(--container-prose) text-sm text-ink-muted">
           EthioCKD is a screening aid for research and education. It does not diagnose chronic

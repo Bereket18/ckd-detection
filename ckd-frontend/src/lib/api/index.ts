@@ -30,3 +30,5 @@ export {
 export { safeText, containsPath, REDACTED } from './redact';
 
 export { toModelView, toPredictionView } from './views';
+
+export { ContractViolation, readPrediction } from './contract';

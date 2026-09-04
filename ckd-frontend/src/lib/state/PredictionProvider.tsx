@@ -1,15 +1,18 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { PredictionContext, type PredictionState } from './prediction-context';
-import type { PredictionView } from '../../types/api.types';
+import type { PatientAssessment, PredictionView } from '../../types/api.types';
 
 interface PredictionProviderProps {
   children: ReactNode;
   /** Test seam only. Production mounts the provider empty. */
   initialPrediction?: PredictionView | null;
+  /** Test seam only. The answers that would have produced `initialPrediction`. */
+  initialAssessment?: PatientAssessment | null;
 }
 
 interface Held {
   prediction: PredictionView | null;
+  assessment: PatientAssessment | null;
   receivedAt: number | null;
 }
 
@@ -36,20 +39,26 @@ interface Held {
 export function PredictionProvider({
   children,
   initialPrediction = null,
+  initialAssessment = null,
 }: PredictionProviderProps) {
-  const [held, setHeld] = useState<Held>({ prediction: initialPrediction, receivedAt: null });
+  const [held, setHeld] = useState<Held>({
+    prediction: initialPrediction,
+    assessment: initialAssessment,
+    receivedAt: null,
+  });
 
-  const setPrediction = useCallback((next: PredictionView) => {
-    setHeld({ prediction: next, receivedAt: Date.now() });
+  const setPrediction = useCallback((next: PredictionView, assessment?: PatientAssessment) => {
+    setHeld({ prediction: next, assessment: assessment ?? null, receivedAt: Date.now() });
   }, []);
 
   const clearPrediction = useCallback(() => {
-    setHeld({ prediction: null, receivedAt: null });
+    setHeld({ prediction: null, assessment: null, receivedAt: null });
   }, []);
 
   const value = useMemo<PredictionState>(
     () => ({
       prediction: held.prediction,
+      assessment: held.assessment,
       receivedAt: held.receivedAt,
       setPrediction,
       clearPrediction,

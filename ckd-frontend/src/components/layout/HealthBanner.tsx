@@ -30,7 +30,7 @@ export function HealthBanner() {
   const degraded = health.state === 'degraded';
 
   return (
-    <div className="border-b border-warn/30 bg-warn-soft">
+    <div className="border-b border-warn/30 bg-warn-soft no-print">
       <Container className="py-3">
         <Alert
           tone="warn"

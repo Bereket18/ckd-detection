@@ -43,7 +43,7 @@ export function AppShell() {
 
       <div className="flex-1">
         <Container width="wide" className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10">
-          <aside className="hidden lg:block">
+          <aside className="hidden no-print lg:block">
             <div className="sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto py-8 pe-2">
               <AppNav />
             </div>
