@@ -83,9 +83,12 @@ class ClinicalPredictionService:
             raise ArtifactLoadError(f"Could not load the clinical artifact bundle: {exc}") from exc
 
         metrics = tabular_model.load_metrics(paths["metrics"]) or {}
+        # The sha256 is kept for integrity verification; the absolute filesystem
+        # path is deliberately excluded. Exposing it via the /model endpoint would
+        # leak server directory layout to any API caller (AUDIT: security finding,
+        # also documented in FRONTEND_PLAN.md Rule 11).
         artifact_metadata = {
             name: {
-                "path": str(path),
                 "sha256": _sha256(path),
             }
             for name, path in paths.items()
