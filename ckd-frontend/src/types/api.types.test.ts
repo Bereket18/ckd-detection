@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { MODEL_FIXTURE } from '../../tests/fixtures/api';
 import type {
   PatientAssessment,
   PredictionResponse,
@@ -117,7 +118,7 @@ describe('API Types', () => {
           { feature: 'sc', value: 0.3, direction: 'raises_risk' },
         ],
         explanation: 'High serum creatinine indicates kidney damage',
-        model: { name: 'rf_model', version: '1.0' },
+        model: MODEL_FIXTURE,
         disclaimer: 'This is for clinical decision support only',
       };
       

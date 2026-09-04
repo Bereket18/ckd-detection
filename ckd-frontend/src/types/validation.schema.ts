@@ -233,7 +233,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   rbc: z
-    .enum(['normal', 'abnormal'], { message: "Must be "normal" or "abnormal"" })
+    .enum(['normal', 'abnormal'], { message: 'Must be "normal" or "abnormal"' })
     .nullable()
     .optional(),
 
@@ -243,7 +243,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   pc: z
-    .enum(['normal', 'abnormal'], { message: "Must be "normal" or "abnormal"" })
+    .enum(['normal', 'abnormal'], { message: 'Must be "normal" or "abnormal"' })
     .nullable()
     .optional(),
 
@@ -253,7 +253,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   pcc: z
-    .enum(['present', 'notpresent'], { message: "Must be "present" or "notpresent"" })
+    .enum(['present', 'notpresent'], { message: 'Must be "present" or "notpresent"' })
     .nullable()
     .optional(),
 
@@ -263,7 +263,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   ba: z
-    .enum(['present', 'notpresent'], { message: "Must be "present" or "notpresent"" })
+    .enum(['present', 'notpresent'], { message: 'Must be "present" or "notpresent"' })
     .nullable()
     .optional(),
 
@@ -277,7 +277,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   htn: z
-    .enum(['yes', 'no'], { message: "Must be "yes" or "no"" })
+    .enum(['yes', 'no'], { message: 'Must be "yes" or "no"' })
     .nullable()
     .optional(),
 
@@ -287,7 +287,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   dm: z
-    .enum(['yes', 'no'], { message: "Must be "yes" or "no"" })
+    .enum(['yes', 'no'], { message: 'Must be "yes" or "no"' })
     .nullable()
     .optional(),
 
@@ -297,7 +297,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   cad: z
-    .enum(['yes', 'no'], { message: "Must be "yes" or "no"" })
+    .enum(['yes', 'no'], { message: 'Must be "yes" or "no"' })
     .nullable()
     .optional(),
 
@@ -307,7 +307,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   appet: z
-    .enum(['good', 'poor'], { message: "Must be "good" or "poor"" })
+    .enum(['good', 'poor'], { message: 'Must be "good" or "poor"' })
     .nullable()
     .optional(),
 
@@ -317,7 +317,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   pe: z
-    .enum(['yes', 'no'], { message: "Must be "yes" or "no"" })
+    .enum(['yes', 'no'], { message: 'Must be "yes" or "no"' })
     .nullable()
     .optional(),
 
@@ -327,7 +327,7 @@ export const patientAssessmentSchema = z.object({
    * Nullable: Yes
    */
   ane: z
-    .enum(['yes', 'no'], { message: "Must be "yes" or "no"" })
+    .enum(['yes', 'no'], { message: 'Must be "yes" or "no"' })
     .nullable()
     .optional(),
 });

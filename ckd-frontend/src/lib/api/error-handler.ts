@@ -5,8 +5,9 @@
  * Maps technical errors from the API to actionable messages for clinicians.
  */
 
-import { APIError, NetworkError, TimeoutError } from './api';
-import type { UserMessage, FieldError } from '../types/api.types';
+import { APIError, NetworkError, TimeoutError } from './client';
+import type { UserMessage, FieldError } from '../../types/api.types';
+import { devLogFailure } from '../log';
 
 /**
  * Validation error detail from FastAPI 422 response
@@ -62,6 +63,17 @@ export class ErrorHandler {
             title: 'API Unavailable',
             message: 'The API is temporarily unavailable. Please try again later.',
             action: 'Retry',
+          };
+
+        // 415 was missing from the original taxonomy. `POST /predict/batch`
+        // answers 415 with `detail` as a bare **string**, not the array a 422
+        // sends, so it needs its own branch rather than the default (§0.5, C7).
+        case 415:
+          return {
+            type: 'error',
+            title: 'Unsupported File Type',
+            message: 'Upload a .csv file. The API rejected the file type that was sent.',
+            action: 'Review',
           };
 
         case 404:
@@ -260,20 +272,18 @@ export class ErrorHandler {
   }
 
   /**
-   * Log error details for debugging
-   * @param error Error object
-   * @param context Additional context about where the error occurred
+   * Record that something failed, for a developer.
+   *
+   * Takes a context string and prints the error *name* and nothing else. It
+   * deliberately does not print the error object, its message, its stack, or a
+   * response body: an `APIError.body` can be a 422 detail array echoing every
+   * submitted field value, and a 503 `detail` can carry an absolute server path
+   * (architecture §8.3, §8.5). Development only.
    */
   logError(error: unknown, context: string): void {
-    const timestamp = new Date().toISOString();
-    const prefix = '[ErrorHandler]';
-
-    console.error(`${timestamp} ${prefix} ${context}`, {
-      error,
-      errorType: error instanceof Error ? error.constructor.name : typeof error,
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    const name =
+      error instanceof Error ? error.name : error === null ? 'null' : typeof error;
+    devLogFailure(`[ErrorHandler] ${context}`, name);
   }
 
   /**

@@ -6,18 +6,21 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ErrorHandler, errorHandler } from './error-handler';
-import { APIError, NetworkError, TimeoutError } from './api';
+import { APIError, NetworkError, TimeoutError } from './client';
 
 describe('ErrorHandler', () => {
   let handler: ErrorHandler;
+  let consoleDebugSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     handler = new ErrorHandler();
+    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
+    consoleDebugSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
 
@@ -305,36 +308,54 @@ describe('ErrorHandler', () => {
     });
   });
 
+  /**
+   * `logError` is a privacy boundary, so these tests assert what is *absent*.
+   *
+   * The Phase 0 implementation logged `{ error, errorType, message, stack }`. A
+   * `detail` string from a degraded `/health` or a 503 carries an absolute server
+   * path, and an `APIError` carries the whole response body — so the object form
+   * printed server internals into a browser console that may be screen-shared or
+   * captured by an extension (§8.3, §8.5). Only the context and the error's
+   * class name survive.
+   */
   describe('logError', () => {
-    it('should log error with context to console', () => {
-      const error = new Error('Test error');
-      
-      handler.logError(error, 'Test context');
+    it('logs the context and the error name, and nothing else', () => {
+      handler.logError(new Error('Test error'), 'Test context');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[ErrorHandler] Test context'),
-        expect.objectContaining({
-          error,
-          errorType: 'Error',
-          message: 'Test error',
-          stack: expect.any(String),
-        })
-      );
+      expect(consoleDebugSpy).toHaveBeenCalledTimes(1);
+      expect(consoleDebugSpy).toHaveBeenCalledWith('[ErrorHandler] Test context [Error]');
     });
 
-    it('should log non-Error objects', () => {
-      const error = { custom: 'error' };
-      
-      handler.logError(error, 'Custom error context');
+    it('never logs the error message, stack, or the error object', () => {
+      const error = new APIError(503, 'Service Unavailable', {
+        detail: 'Model artifact not found at C:\\Users\\berek\\saved_models\\tabular_model.joblib',
+      });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[ErrorHandler] Custom error context'),
-        expect.objectContaining({
-          error,
-          errorType: 'object',
-          message: '[object Object]',
-        })
-      );
+      handler.logError(error, 'health probe');
+
+      const logged = consoleDebugSpy.mock.calls.flat().join(' ');
+      expect(logged).not.toContain('C:\\');
+      expect(logged).not.toContain('saved_models');
+      expect(logged).not.toContain('503 Service Unavailable');
+      expect(consoleDebugSpy.mock.calls[0]).toHaveLength(1);
+      expect(logged).toBe('[ErrorHandler] health probe [APIError]');
+    });
+
+    it('describes a non-Error value by its type rather than stringifying it', () => {
+      handler.logError({ custom: 'error' }, 'Custom error context');
+
+      expect(consoleDebugSpy).toHaveBeenCalledWith('[ErrorHandler] Custom error context [object]');
+    });
+
+    it('handles null without throwing', () => {
+      expect(() => handler.logError(null, 'null context')).not.toThrow();
+      expect(consoleDebugSpy).toHaveBeenCalledWith('[ErrorHandler] null context [null]');
+    });
+
+    it('does not use console.error, which browsers retain in crash reports', () => {
+      handler.logError(new TimeoutError('Request timed out'), 'timeout context');
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
   });
 

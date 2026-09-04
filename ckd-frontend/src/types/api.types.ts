@@ -46,41 +46,107 @@ export interface PatientAssessment {
 
 /**
  * SHAP Driver Schema
- * Represents a single feature's contribution to the prediction
+ * Represents a single feature's contribution to the prediction.
+ *
+ * `feature` is a raw field name from `/model.feature_schema`, so a driver can be
+ * joined against the submitted assessment to show the patient's own value.
+ * `value` is the signed SHAP value; `direction` is the backend's reading of its
+ * sign. The frontend renders `direction` and never re-derives it (plan R4.3).
  */
 export interface ShapDriver {
-  feature: string;  // Feature name (e.g., "age", "bp", "sc")
-  value: number;    // SHAP value indicating impact magnitude
-  direction: 'raises_risk' | 'lowers_risk' | 'neutral';  // Direction of impact
+  feature: string;
+  value: number;
+  direction: 'raises_risk' | 'lowers_risk' | 'neutral';
 }
 
 /**
- * Model Information Schema
- * Contains metadata about the model used for predictions
+ * `GET /model` — the metadata document, as the backend actually returns it.
+ *
+ * Every field below was observed in a live response (architecture §11.1). Keys
+ * inside `metrics` are copied conditionally by `ClinicalPredictionService.
+ * model_metadata()`, hence optional; absence means "not reported", never zero.
+ *
+ * There is no training date in this contract. `training_date` was a fabricated
+ * field on the old `ModelInfo` and is deliberately not declared (backend
+ * dependency D1).
  */
-export interface ModelInfo {
+export interface ModelMetadata {
   name: string;
-  version: string;
+  version: string; // = artifacts.model.sha256.slice(0, 12)
+  feature_count: number;
+  feature_schema: string[]; // 24 raw field names, model order
+  datasets: string[];
+  n_rows: number | null;
+  n_train: number | null;
+  n_test: number | null;
+  metrics: ModelMetrics;
+  /** `path` is an absolute server path and is NEVER rendered (§8.3). */
+  artifacts: Record<string, { path: string; sha256: string }>;
+  limitations: string[];
+}
+
+export interface ModelMetrics {
   accuracy?: number;
-  recall?: number;
   precision?: number;
-  training_date?: string;
+  recall?: number;
+  specificity?: number;
+  f1?: number;
+  auc_roc?: number;
+  brier_score?: number;
+  confusion_matrix?: number[][];
+  intervals?: Record<string, [number, number]>;
 }
 
 /**
- * Prediction Response Schema
- * Contains the complete prediction result with explanations
+ * What components receive: identical to {@link ModelMetadata} except that the
+ * filesystem path is dropped at the parse boundary, so a component cannot
+ * render what it never receives (§8.3, layer 1).
+ */
+export interface ModelView extends Omit<ModelMetadata, 'artifacts'> {
+  artifacts: Record<string, { sha256: string }>;
+}
+
+/**
+ * `POST /predict` — the prediction response.
+ *
+ * `ckd_score` is the model's raw positive-class score. It is **not** a
+ * calibrated probability — the backend says so itself in `model.limitations` —
+ * so it is never presented as a percentage chance of disease (plan R3.4).
+ *
+ * `risk_band` is computed by the backend from bounds it does not expose. It is
+ * consumed as given and never recomputed (plan R3.2).
+ *
+ * `model` is the complete `/model` document, embedded verbatim — which means the
+ * `artifacts[*].path` leak reaches Results and Explainability too, not only the
+ * Model Card (§8.3, C1).
+ *
+ * `explanation` is backend-authored patient-facing copy. It is rendered verbatim
+ * or not at all; the frontend never paraphrases it (plan R3.3).
  */
 export interface PredictionResponse {
-  prediction: 'ckd' | 'notckd';  // Binary classification result
-  ckd_score: number;              // Confidence score (0-1)
-  risk_band: 'LOW' | 'MODERATE' | 'HIGH';  // Risk category
-  imputed_fields: string[];       // List of fields that were imputed
-  imputation_count: number;       // Count of imputed fields
-  shap_drivers: ShapDriver[];     // Top contributing features
-  explanation: string | null;     // Optional textual explanation
-  model: Record<string, unknown>; // Model metadata dictionary
-  disclaimer: string;             // Disclaimer text for clinical use
+  prediction: 'ckd' | 'notckd';
+  ckd_score: number;
+  risk_band: RiskBand;
+  imputed_fields: string[];
+  imputation_count: number;
+  shap_drivers: ShapDriver[];
+  explanation: string | null;
+  model: ModelMetadata;
+  disclaimer: string;
+}
+
+/** Risk band as returned by the backend. Never derived frontend-side. */
+export type RiskBand = 'LOW' | 'MODERATE' | 'HIGH';
+
+/** Verdict as returned by the backend. */
+export type Verdict = 'ckd' | 'notckd';
+
+/**
+ * A prediction with its server-supplied paths already stripped — the shape the
+ * prediction context holds and components consume.
+ */
+export interface PredictionView extends Omit<PredictionResponse, 'model'> {
+  model: ModelView;
 }
 
 /**
@@ -88,9 +154,9 @@ export interface PredictionResponse {
  * Represents a single prediction result in batch processing
  */
 export interface BatchPredictionItem {
-  prediction: 'ckd' | 'notckd';
+  prediction: Verdict;
   ckd_score: number;
-  risk_band: 'LOW' | 'MODERATE' | 'HIGH';
+  risk_band: RiskBand;
   imputed_fields: string[];
   imputation_count: number;
   shap_drivers: ShapDriver[];
@@ -106,17 +172,52 @@ export interface BatchPredictionResponse {
 }
 
 /**
- * Health Response Schema
- * Provides API health status and model availability information
+ * `GET /health` — a status probe, not a model description.
+ *
+ * `model`, `preprocessor`, and `shap` are artefact *statuses* (`"ready"`), not
+ * names — the old spec's "display the model name from /health" was wrong about
+ * the contract. A name only exists on `/model`.
+ *
+ * A degraded response arrives with **HTTP 200**, not an error status, and its
+ * `detail` may embed an absolute server path — so `detail` is used to select a
+ * message and is never rendered (§8.3, layer 3).
  */
 export interface HealthResponse {
-  status: 'ok' | 'degraded';     // API operational status
-  model: string;                  // Model artifact status
-  preprocessor: string;           // Preprocessor artifact status
-  shap: string;                   // SHAP explainer artifact status
-  schema_compatible: boolean;     // Schema compatibility check
-  feature_count: number | null;   // Number of features expected by model
-  detail: string | null;          // Optional detail message
+  status: 'ok' | 'degraded';
+  model: string;
+  preprocessor: string;
+  shap: string;
+  schema_compatible: boolean;
+  feature_count: number | null;
+  detail: string | null;
+}
+
+/**
+ * The subset of `GET /openapi.json` the frontend reads: the numeric bounds and
+ * enum values FastAPI emits for `PatientAssessment`. Bounds are read from here
+ * rather than copied into frontend source, so the two cannot disagree (§6.1).
+ *
+ * Nullable fields are emitted as `anyOf: [<constrained>, { type: 'null' }]`, so
+ * the reader takes the non-null branch.
+ */
+export interface OpenApiDocument {
+  components?: {
+    schemas?: Record<string, OpenApiSchema>;
+  };
+}
+
+export interface OpenApiSchema {
+  type?: string;
+  properties?: Record<string, OpenApiSchema>;
+  required?: string[];
+  anyOf?: OpenApiSchema[];
+  enum?: string[];
+  const?: string;
+  minimum?: number;
+  maximum?: number;
+  exclusiveMinimum?: number;
+  exclusiveMaximum?: number;
+  title?: string;
 }
 
 /**
@@ -161,6 +262,17 @@ export function isPredictionResponse(data: unknown): data is PredictionResponse 
     'ckd_score' in data &&
     'risk_band' in data &&
     'shap_drivers' in data
+  );
+}
+
+export function isModelMetadata(data: unknown): data is ModelMetadata {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'feature_schema' in data &&
+    Array.isArray((data as ModelMetadata).feature_schema) &&
+    'version' in data &&
+    'limitations' in data
   );
 }
 

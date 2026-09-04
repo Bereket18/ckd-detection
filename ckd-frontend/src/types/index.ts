@@ -7,11 +7,18 @@
 export type {
   PatientAssessment,
   ShapDriver,
-  ModelInfo,
+  ModelMetadata,
+  ModelMetrics,
+  ModelView,
+  RiskBand,
+  Verdict,
   PredictionResponse,
+  PredictionView,
   BatchPredictionItem,
   BatchPredictionResponse,
   HealthResponse,
+  OpenApiDocument,
+  OpenApiSchema,
   ApiStatus,
   UserMessage,
   FieldError,
@@ -20,6 +27,7 @@ export type {
 // Type guards
 export {
   isPredictionResponse,
+  isModelMetadata,
   isHealthResponse,
   isBatchPredictionResponse,
 } from './api.types';

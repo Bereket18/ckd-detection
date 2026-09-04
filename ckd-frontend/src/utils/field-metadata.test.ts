@@ -202,7 +202,7 @@ describe('Field Metadata Configuration', () => {
       expect(sections).toHaveLength(4);
       
       for (let i = 1; i < sections.length; i++) {
-        expect(sections[i].order).toBeGreaterThan(sections[i - 1].order);
+        expect(sections[i]!.order).toBeGreaterThan(sections[i - 1]!.order);
       }
     });
 
@@ -262,25 +262,25 @@ describe('Field Metadata Configuration', () => {
 
   describe('Field Validation Ranges', () => {
     it('should have correct range for age', () => {
-      const field = FIELD_METADATA.age;
+      const field = FIELD_METADATA.age!;
       expect(field.min).toBe(0);
       expect(field.max).toBe(120);
     });
 
     it('should have correct range for blood pressure', () => {
-      const field = FIELD_METADATA.bp;
+      const field = FIELD_METADATA.bp!;
       expect(field.min).toBe(30);
       expect(field.max).toBe(200);
     });
 
     it('should have correct range for serum creatinine', () => {
-      const field = FIELD_METADATA.sc;
+      const field = FIELD_METADATA.sc!;
       expect(field.min).toBe(0);
       expect(field.max).toBe(80);
     });
 
     it('should have correct range for specific gravity', () => {
-      const field = FIELD_METADATA.sg;
+      const field = FIELD_METADATA.sg!;
       expect(field.min).toBe(1.0);
       expect(field.max).toBe(1.03);
     });
@@ -291,7 +291,7 @@ describe('Field Metadata Configuration', () => {
       const fields = ['htn', 'dm', 'cad', 'pe', 'ane'];
       
       fields.forEach((fieldName) => {
-        const field = FIELD_METADATA[fieldName];
+        const field = FIELD_METADATA[fieldName]!;
         expect(field.options).toHaveLength(2);
         
         const values = field.options!.map((o) => o.value);
@@ -304,7 +304,7 @@ describe('Field Metadata Configuration', () => {
       const fields = ['rbc', 'pc'];
       
       fields.forEach((fieldName) => {
-        const field = FIELD_METADATA[fieldName];
+        const field = FIELD_METADATA[fieldName]!;
         expect(field.options).toHaveLength(2);
         
         const values = field.options!.map((o) => o.value);
@@ -317,7 +317,7 @@ describe('Field Metadata Configuration', () => {
       const fields = ['pcc', 'ba'];
       
       fields.forEach((fieldName) => {
-        const field = FIELD_METADATA[fieldName];
+        const field = FIELD_METADATA[fieldName]!;
         expect(field.options).toHaveLength(2);
         
         const values = field.options!.map((o) => o.value);
@@ -327,7 +327,7 @@ describe('Field Metadata Configuration', () => {
     });
 
     it('should have correct options for appetite field', () => {
-      const field = FIELD_METADATA.appet;
+      const field = FIELD_METADATA.appet!;
       expect(field.options).toHaveLength(2);
       
       const values = field.options!.map((o) => o.value);
