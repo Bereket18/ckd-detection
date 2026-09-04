@@ -1,194 +1,81 @@
-# CKD Frontend
+# ckd-frontend
 
-A React-based single-page application for chronic kidney disease (CKD) risk assessment.
+Frontend for **EthioCKD — Explainable AI for CKD Risk Screening**.
 
-## Overview
+> **State: Phase 0 complete.** The Vite starter UI and the superseded form components have been
+> removed; the verified data layer was kept and repaired. No product UI exists yet.
+>
+> Authoritative requirements: [`../FRONTEND_PLAN.md`](../FRONTEND_PLAN.md).
+> Why the requirements changed: [`../FRONTEND_REQUIREMENTS_RECONCILIATION.md`](../FRONTEND_REQUIREMENTS_RECONCILIATION.md).
+> `.kiro/specs/ckd-frontend/` is historical and marked SUPERSEDED — do not implement from it.
 
-The CKD Frontend provides clinicians with a web interface to assess CKD risk by inputting patient clinical data. The application connects to the EthioCKD Clinical API (FastAPI backend) to submit patient data and display risk predictions with explainability information using SHAP values.
+## Stack
 
-## Technology Stack
+Vite 8 · React 19 · TypeScript (strict) · Vitest + React Testing Library · Zod · React Hook Form.
 
-- **Framework**: React 18+ with TypeScript
-- **Build Tool**: Vite
-- **State Management**: React hooks (useState, useReducer)
-- **Form Management**: React Hook Form with Zod validation
-- **Testing**: Vitest + React Testing Library + MSW (Mock Service Worker)
-- **Code Quality**: ESLint + Prettier
-- **HTTP Client**: Fetch API with custom wrapper
+React Router, Tailwind, Lucide, Recharts, TanStack Query, and MSW are **not installed yet** — they
+arrive in Phase 2 with the code that uses them.
 
-## Prerequisites
+## What is here
 
-- Node.js 18+ and npm
-- Backend API running on http://localhost:8000
+```text
+src/
+  main.tsx                 bare mount; placeholder until Phase 2 adds the router
+  types/
+    api.types.ts           mirrors api/schemas.py — verified field-by-field
+    validation.schema.ts    Zod schema for the 24 fields, all nullable
+    index.ts  README.md
+  services/
+    api.ts                 APIClient: AbortController timeouts, APIError /
+                           TimeoutError / NetworkError
+    error-handler.ts       ErrorHandler: turns those into user-facing copy
+    index.ts
+  utils/
+    field-metadata.ts      labels, units, ranges, sections, clinical tooltips
+tests/setup.ts
+```
 
-## Getting Started
+Layering worth knowing before you touch the services: `APIError.message` is deliberately the raw
+`"<status> <statusText>"`. All user-facing wording comes from `ErrorHandler.handleAPIError()`.
+Components read the handler, never the raw error.
 
-### Installation
+## Commands
 
 ```bash
 npm install
-```
-
-### Development
-
-Start the development server on port 5173:
-
-```bash
-npm run dev
-```
-
-The application will be available at http://localhost:5173
-
-### Building for Production
-
-```bash
-npm run build
-```
-
-This creates an optimized production build in the `dist/` directory.
-
-### Preview Production Build
-
-```bash
-npm run preview
-```
-
-## Testing
-
-### Run tests in watch mode
-
-```bash
-npm test
-```
-
-### Run tests once
-
-```bash
-npm run test:run
-```
-
-### Run tests with coverage
-
-```bash
-npm run test:coverage
-```
-
-## Code Quality
-
-### Lint code
-
-```bash
+npm run dev            # http://localhost:5173 — the port the backend's CORS allows
+npm run build          # tsc -b && vite build
 npm run lint
-```
-
-### Format code
-
-```bash
+npm run test:run
 npm run format
 ```
 
-### Check formatting
+All four of `tsc --noEmit -p tsconfig.app.json`, `eslint .`, `vitest run`, and `npm run build` pass as
+of Phase 0. If `npm run build` ever dies with `FATAL ERROR: Zone Allocation failed - process out of
+memory`, it is a stale incremental artefact, not a real memory problem — `rm -rf node_modules/.tmp`
+and re-run. See risk 9 in [`../FRONTEND_PLAN.md`](../FRONTEND_PLAN.md).
+
+## Backend
+
+The FastAPI backend is a protected dependency and is never modified from here. Start it separately:
 
 ```bash
-npm run format:check
+venv/Scripts/python.exe -m uvicorn api.main:app --port 8000
 ```
 
-## Environment Variables
+Four routes exist: `GET /health`, `GET /model`, `POST /predict`, `POST /predict/batch`. Anything
+else a design document mentions does not exist — see the reconciliation report for the list of
+planned backend dependencies.
 
-### Development (`.env.development`)
+The field schema is read from the backend, never hardcoded: names and order from
+`/model.feature_schema`, bounds and enums from `/openapi.json`, and human-readable copy from a
+frontend content layer guarded by a parity test. `field-metadata.ts` is the precursor to that
+content layer.
 
-- `VITE_API_BASE_URL`: Backend API URL (default: http://localhost:8000)
-- `VITE_API_TIMEOUT`: API request timeout in milliseconds (default: 30000)
-- `VITE_HEALTH_CHECK_INTERVAL`: Health check interval in milliseconds (default: 60000)
+## Rules that are enforced by tests, not just documented
 
-### Production (`.env.production`)
-
-- `VITE_API_BASE_URL`: Backend API URL (configure for production)
-- `VITE_API_TIMEOUT`: API request timeout in milliseconds (default: 30000)
-- `VITE_HEALTH_CHECK_INTERVAL`: Health check interval in milliseconds (default: 120000)
-
-## Project Structure
-
-```
-ckd-frontend/
-├── src/
-│   ├── components/
-│   │   ├── common/        # Reusable UI components
-│   │   ├── form/          # Form input components
-│   │   ├── results/       # Results display components
-│   │   ├── batch/         # Batch upload components
-│   │   └── health/        # Health monitoring components
-│   ├── services/          # API client and services
-│   ├── types/             # TypeScript type definitions
-│   ├── utils/             # Utility functions
-│   ├── hooks/             # Custom React hooks
-│   ├── styles/            # Global styles and CSS
-│   ├── App.tsx            # Root component
-│   └── main.tsx           # Application entry point
-├── tests/
-│   ├── unit/              # Unit tests
-│   ├── integration/       # Integration tests
-│   └── setup.ts           # Test setup and configuration
-├── public/                # Static assets
-└── ...config files
-```
-
-## Features
-
-### Single Patient Assessment
-
-- Input clinical data for 24 features (demographics, lab values, medical history)
-- Real-time validation with clinical ranges
-- Submit to API for CKD risk prediction
-- Display results with:
-  - Binary prediction (CKD / Not CKD)
-  - Risk band (LOW / MODERATE / HIGH)
-  - Confidence score
-  - SHAP explanations showing which factors influenced the prediction
-  - Imputation warnings for missing data
-
-### Batch Assessment
-
-- Upload CSV file with multiple patient records
-- Process batch predictions
-- View results table with all predictions
-- Export enhanced CSV with prediction results
-
-### Health Monitoring
-
-- Automatic API health checks
-- Status indicators (OK / Degraded / Offline)
-- Disable form when API is unavailable
-- Display model metadata
-
-## API Integration
-
-The frontend communicates with the FastAPI backend on port 8000:
-
-- `GET /health` - Check API health status
-- `GET /model` - Get model metadata
-- `POST /predict` - Submit single patient assessment
-- `POST /predict/batch` - Submit batch assessments
-
-CORS is pre-configured on the backend to allow requests from port 5173.
-
-## Browser Compatibility
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Accessibility
-
-The application follows WCAG 2.1 AA guidelines:
-
-- Keyboard navigation support
-- Screen reader compatibility
-- Sufficient color contrast (4.5:1 for normal text)
-- ARIA labels on all interactive elements
-- Semantic HTML structure
-
-## License
-
-[Your License Here]
+- Never render `model.artifacts[*].path` — `/model` currently returns absolute server paths.
+- Never recompute `risk_band`, SHAP direction, or imputation flags; read them from the response.
+- Never describe `ckd_score` as a calibrated probability; the backend states it is not one.
+- Never write patient data to `localStorage`; in-progress input goes to `sessionStorage` only.
+- No secret in any `VITE_*` variable or `.env.*` file — they are inlined into the browser bundle.

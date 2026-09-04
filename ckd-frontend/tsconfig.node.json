@@ -3,7 +3,7 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "es2023",
     "lib": ["ES2023"],
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -19,5 +19,16 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts"]
+  /**
+   * `vite.config.ts` plus the two tests that run *as tooling* rather than as
+   * browser code: both read the repository off disk (`node:fs`), import nothing
+   * from `src/`, and render nothing.
+   *
+   * They live here rather than in `tsconfig.app.json` so that `node` types stay
+   * out of the browser project. Adding `"node"` there would have fixed the same
+   * seven errors in one line and made `process.env` and `node:fs` type-check
+   * inside a React component — exactly the boundary
+   * `tests/guards/repository.test.ts` exists to police.
+   */
+  "include": ["vite.config.ts", "tests/guards/repository.test.ts", "tests/a11y/tokens.test.ts"]
 }

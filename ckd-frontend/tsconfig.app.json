@@ -33,5 +33,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests"],
+  // Node-side tooling tests, checked by `tsconfig.node.json` where `node` types
+  // are in scope. Keeping them out here is what lets this project stay
+  // browser-only: no `process`, no `node:fs`, in `src/`.
+  "exclude": ["tests/guards/repository.test.ts", "tests/a11y/tokens.test.ts"]
 }

@@ -1,5 +1,17 @@
 # Implementation Plan: CKD Frontend
 
+> **SUPERSEDED — historical documentation. Do not work these tasks.**
+>
+> Authoritative source: [FRONTEND_PLAN.md](../../../FRONTEND_PLAN.md).
+> Why: [FRONTEND_REQUIREMENTS_RECONCILIATION.md](../../../FRONTEND_REQUIREMENTS_RECONCILIATION.md).
+>
+> The 91 tasks below (11 marked complete) target a flat single-page clinician form with all 24
+> fields shown at once. That product decision was reversed: the assessment is now a guided
+> multi-step patient-facing flow. None of these tasks were executed in Phase 0, and none should be
+> picked up. The completed work they produced was audited individually — the service and validation
+> layers were kept and repaired, the form components were removed with their accessibility patterns
+> documented for re-implementation in Tailwind.
+
 ## Overview
 
 This plan implements a standalone React + TypeScript single-page application for CKD risk assessment. The frontend will be completely independent from the backend API, enabling the API to be reused by bots, mobile apps, and other clients. The implementation follows a component-based architecture with comprehensive validation, error handling, and accessibility support.
@@ -42,7 +54,7 @@ This plan implements a standalone React + TypeScript single-page application for
     - _Requirements: 1.2, 6.1, 6.7_
 
 - [ ] 3. Implement API client service
-  - [-] 3.1 Create base APIClient class
+  - [x] 3.1 Create base APIClient class
     - Implement HTTP wrapper with fetch API
     - Configure base URL from environment variable (http://localhost:8000)
     - Set request timeout to 30 seconds
@@ -67,7 +79,7 @@ This plan implements a standalone React + TypeScript single-page application for
     - _Requirements: 2.4, 2.5, 2.6, 2.7, 9.5_
 
 - [ ] 4. Build reusable form input components
-  - [-] 4.1 Create NumericInput component
+  - [x] 4.1 Create NumericInput component
     - Accept props: name, label, unit, min, max, tooltip, error, value, onChange
     - Render input with type="number" and validation attributes
     - Display unit label next to input (e.g., "mmHg")
@@ -85,7 +97,7 @@ This plan implements a standalone React + TypeScript single-page application for
     - Test tooltip appears on hover
     - _Requirements: 6.2, 6.4, 6.5_
   
-  - [ ] 4.3 Create CategoricalSelect component
+  - [x] 4.3 Create CategoricalSelect component
     - Accept props: name, label, options, tooltip, error, value, onChange
     - Render select dropdown with options from props
     - Include "Not provided" option that sets value to null
@@ -102,7 +114,7 @@ This plan implements a standalone React + TypeScript single-page application for
     - Test ARIA labels are present
     - _Requirements: 7.6, 7.7_
   
-  - [-] 4.5 Create FormSection component
+  - [x] 4.5 Create FormSection component
     - Accept props: title, description, children, collapsible
     - Render section header with title
     - Render description text below title if provided

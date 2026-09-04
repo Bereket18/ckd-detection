@@ -1,5 +1,18 @@
 # Requirements Document
 
+> **SUPERSEDED — historical documentation. Do not implement from this file.**
+>
+> Authoritative source: [FRONTEND_PLAN.md](../../../FRONTEND_PLAN.md).
+> Why, requirement by requirement:
+> [FRONTEND_REQUIREMENTS_RECONCILIATION.md](../../../FRONTEND_REQUIREMENTS_RECONCILIATION.md).
+>
+> About 45 of the 70 acceptance criteria below were verified against the live backend and carried
+> forward. Nine were rejected — notably R3.3 (`ckd_score` as a percentage, which the backend's own
+> `limitations` list contradicts), R3.5 (5 SHAP drivers; `top_n=3` is hardcoded), R5.6 (`/health`
+> returns a status string, not a model name), R7.1–R7.3 (desktop-first; now mobile-first), and
+> R10.4/R10.7 (capabilities the API does not have). R8 (CSV batch) moved to Research Lab.
+> The audience also changed: clinicians only → patients and researchers.
+
 ## Introduction
 
 The EthioCKD Clinical API requires a web-based frontend that enables clinicians to assess chronic kidney disease (CKD) risk for patients through a user-friendly interface. The frontend shall connect to the existing FastAPI backend (running on localhost with CORS configured for port 5173), allow clinicians to input patient clinical data across 24 features, submit assessments to the API, and display predictions with risk bands and explainability information. The system must handle both complete and incomplete patient data (missing values are imputed by the backend model), provide clear visualizations of risk factors using SHAP driver data, and maintain data validation to ensure clinical accuracy.

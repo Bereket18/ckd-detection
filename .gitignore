@@ -35,7 +35,6 @@ ckd-frontend/.env
 ckd-frontend/.env.local
 ckd-frontend/.env.production
 ckd-frontend/*.log
-ckd-frontend/*.py
 
 # Kiro temp files
 .kiro/specs/**/TASK_*.md

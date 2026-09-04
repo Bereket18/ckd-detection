@@ -1,5 +1,19 @@
 # Design Document: CKD Frontend
 
+> **SUPERSEDED — historical documentation. Do not implement from this file.**
+>
+> Authoritative source: [FRONTEND_PLAN.md](../../../FRONTEND_PLAN.md).
+> Why, section by section:
+> [FRONTEND_REQUIREMENTS_RECONCILIATION.md](../../../FRONTEND_REQUIREMENTS_RECONCILIATION.md).
+>
+> Kept from this document: the ErrorBoundary pattern, the `APIError` / `ErrorHandler` layering,
+> `sessionStorage`-never-`localStorage` for in-progress form data, the retry and
+> graceful-degradation strategies, the four-tier test split and its reasoning about property-based
+> testing, and Vite on port 5173.
+>
+> Rejected: "core functionality works without JavaScript" (false for an SPA), the tabbed
+> single-page component hierarchy (now routed multi-page), and "React 18+" (React 19 is installed).
+
 ## Overview
 
 The CKD Frontend is a React-based single-page application (SPA) that provides clinicians with a web interface for assessing chronic kidney disease (CKD) risk. The application connects to the existing EthioCKD Clinical API (FastAPI backend) to submit patient clinical data and display risk predictions with explainability information.
