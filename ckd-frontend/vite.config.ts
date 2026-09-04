@@ -48,6 +48,18 @@ export default defineConfig({
     restoreMocks: true,
     clearMocks: true,
     /**
+     * Threads, not the default `forks` pool.
+     *
+     * On this Windows environment `forks` cannot spawn a worker at all — Node
+     * fails the child process outright (`Error: spawn UNKNOWN`, `errno -4094`)
+     * and the whole run dies before a single test is collected. Worker threads
+     * start fine and give the same isolation guarantees this suite needs, since
+     * nothing here depends on per-test `process` state. Without this line the
+     * documented `npm run test:run` does not work on the machine the project is
+     * developed on, which is the worst possible place for a config default.
+     */
+    pool: 'threads',
+    /**
      * Worker concurrency is capped, and this is a correctness setting rather than
      * a performance one.
      *
