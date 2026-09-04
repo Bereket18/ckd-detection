@@ -9,8 +9,10 @@ __pycache__/
 venv/
 .venv/
 
-# Environment variables / secrets
+# Environment variables / secrets — never commit real keys or tokens
 .env
+.env.local
+.env.*.local
 
 # Data (never commit REAL patient data — e.g. any future Ethiopian
 # hospital dataset stays out. Exception: the UCI CKD dataset is public,
@@ -22,12 +24,39 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
-# Trained models (large binary files)
+# Trained models (large binary files — regenerable via scripts/train_baseline.py)
 saved_models/*
 !saved_models/.gitkeep
 
 # MLflow local tracking
 mlruns/
 
+# Frontend — root-level node_modules from any accidental npm/vite invocations
+node_modules/
+
+# Frontend — ckd-frontend build and install artifacts
+ckd-frontend/node_modules/
+ckd-frontend/dist/
+ckd-frontend/.vite/
+ckd-frontend/coverage/
+# .env files — non-secret config only; tracked copies cause drift.
+# Use .env.development.example and .env.production.example as templates.
+ckd-frontend/.env
+ckd-frontend/.env.development
+ckd-frontend/.env.production
+ckd-frontend/.env.local
+ckd-frontend/.env.*.local
+ckd-frontend/*.log
+
+# Kiro IDE — spec and task metadata are IDE state, not source
+# The .md spec documents (design.md, requirements.md, tasks.md) ARE kept
+# as historical documentation; only the IDE-internal config files are excluded.
+.kiro/specs/**/.config.kiro
+.kiro/specs/**/tasks.meta.json
+# Kiro temp task files generated during spec execution
+.kiro/specs/**/TASK_*.md
+.kiro/specs/**/*.py
+
 # OS
 .DS_Store
+Thumbs.db

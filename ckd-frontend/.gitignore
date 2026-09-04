@@ -1,0 +1,44 @@
+# Build output
+dist
+dist-ssr
+
+# Dependencies
+node_modules
+
+# Vite cache
+.vite
+
+# Test coverage
+coverage
+.nyc_output
+
+# Environment files — no secrets may ever appear in VITE_* variables
+# (FRONTEND_PLAN.md Rule 9, architecture §8.1). Use .env.*.example
+# as templates that ARE committed; the real files are not.
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
