@@ -401,3 +401,36 @@ describe('§8.1 · no secret can ship in the bundle', () => {
     expect(read(name)).toMatch(/^VITE_API_BASE_URL=\/api$/m);
   });
 });
+
+describe('§4 · derived values are read from the response, never recomputed', () => {
+  it('duplicates neither risk-band boundary', () => {
+    // `RISK_BAND_BOUNDS = (0.35, 0.65)` lives in the backend's `config.py` and is
+    // exposed by no endpoint. A copy here would be a second source of truth for the
+    // one number a patient actually acts on, and it would drift silently — the band
+    // would keep rendering, just wrongly. Read `risk_band`; never re-derive it from
+    // `ckd_score`.
+    //
+    // If this ever fires on an unrelated `0.35` (an opacity, a chart domain), move
+    // that value into a named constant rather than loosening the pattern.
+    expect(scan(CODE_ONLY, /\b0\.(?:35|65)\b/)).toEqual([]);
+  });
+
+  it('compares a score against no threshold of its own', () => {
+    // The other shape the same mistake takes: `score > 0.5 ? 'HIGH' : 'LOW'`.
+    expect(scan(CODE_ONLY, /\b(?:ckd_score|score)\s*[<>]=?\s*0?\.\d/)).toEqual([]);
+  });
+
+  it('turns the score into a percentage nowhere but a bar width', () => {
+    // `ckd_score` is not a calibrated probability — the service says so in its own
+    // `limitations` — so a figure like "92.7%" would be a claim the model cannot
+    // support, and every reader would take it as a probability of disease.
+    //
+    // A CSS length is exempt because it is not a claim: the meter in `ResultPanel`
+    // scales a bar to the score and prints no number. The filter keys on `width`
+    // and `style` for exactly that case.
+    const hits = scan(CODE, /ckd_score[^\n]*\*\s*100|\*\s*100[^\n]*ckd_score/).filter(
+      (hit) => !/\bwidth\b|\bstyle\b/.test(hit)
+    );
+    expect(hits).toEqual([]);
+  });
+});
