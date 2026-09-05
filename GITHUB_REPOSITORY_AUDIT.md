@@ -43,8 +43,8 @@
 | Open pull requests | 0 |
 | Releases | 0 (tags exist but no GitHub Releases created from them) |
 | Repository description | "Federated Multimodal Learning for Early Detection of Chronic Kidney Disease Using Clinical, Imaging, and Clinical Data." (note: "Clinical Data" appears twice in the description) |
-| CI badge | `tests.yml` badge only — passing |
-| Frontend CI | **None on origin.** `frontend.yml` exists locally but has never been pushed. |
+| CI badge | `tests.yml` badge only — **red; see the correction in §4** |
+| Frontend CI | `frontend.yml` is tracked on `chore/repo-governance`, not on `main`. It has run once and failed in 10s (§4). |
 | `.github/workflows/` on main | `tests.yml` only |
 
 ### Local working tree state
@@ -66,7 +66,7 @@ The working tree is **in active mid-work state** on `test/preprocessing-shap-pip
 
 | Branch | Tip commit | Age | Status |
 |---|---|---|---|
-| `main` | `f71630d` | 2026-08-27 | Default branch, CI passing |
+| `main` | `f71630d` | 2026-08-27 | Default branch, **CI red** (§5) |
 | `feat/shap-explainability` | `b5c5a6f` | 2026-08-24 | 3 commits ahead of the base they diverged from; NOT merged to main |
 | `test/preprocessing-shap-pipeline` | `65cf810` | 2026-08-27 | 6 commits ahead of main; NOT merged; large frontend + API work |
 
@@ -128,6 +128,13 @@ This branch diverged from `f71630d` — the current main tip. It is **6 commits 
 
 ## 4. CI/Workflow Status
 
+> **CORRECTED 2026-09-05.** The first version of this section reported "10 runs
+> visible on GitHub; all complete without obvious failures" and a badge state of
+> "Passing on `main`". Both were wrong, and §5 built a whole narrative on them.
+> The run history was read from the Actions list without opening a single run's
+> logs. What follows was measured with `gh run list --limit 100 --json
+> conclusion,status,workflowName,headBranch` and by reading the failing job logs.
+
 ### `tests.yml` (backend pytest)
 
 | Property | State |
@@ -137,38 +144,103 @@ This branch diverged from `f71630d` — the current main tip. It is **6 commits 
 | Python version | 3.11 (pinned) |
 | Installs | `requirements.txt` + `requirements-advanced.txt` with PyTorch CPU index |
 | Test command | `pytest -v` |
-| Known run history | 10 runs visible on GitHub; all complete without obvious failures |
-| Current badge state | Passing on `main` |
+| Actual run history | **16 `tests` runs between 2026-08-24 and 2026-09-05. Before the fix on 2026-09-05: 14 `failure`, 1 `startup_failure`, 0 `success`.** |
+| Actual badge state | **Red on `main`, and red on every branch. CI had never passed once.** |
 
-The `tests.yml` workflow is **well-designed**. It installs both requirements files, pins Python 3.11, uses the CPU wheel index for torch, and relies on the committed UCI CSV for data-dependent tests. No issues found in the YAML itself.
+The YAML itself is sound — Python is pinned, both requirements files are
+installed, the CPU wheel index avoids the 2 GB CUDA build, and the committed UCI
+CSV means data-dependent tests need no secrets. The failure was never in this
+file. See §5.
 
 ### `frontend.yml` (TypeScript/Vitest/ESLint/build)
 
 | Property | State |
 |---|---|
-| File location | **Untracked** — exists at `.github/workflows/frontend.yml` locally but has **never been pushed to origin** |
-| GitHub status | **Does not exist on GitHub.** No frontend CI runs have ever executed. |
-| Badge in README | **None** — the README only has the `tests.yml` badge |
+| File location | `.github/workflows/frontend.yml`, tracked **only on `chore/repo-governance`** — not on `main` |
+| GitHub status | **1 run, `failure`, 10 seconds.** Not "never executed" as first reported |
+| Failure cause | `The specified node version file at: .../ckd-frontend/.nvmrc does not exist` — the workflow sets `node-version-file: ckd-frontend/.nvmrc`, but `.nvmrc` (`25.2.1`) is tracked on `test/preprocessing-shap-pipeline`, a different branch |
+| Badge in README | Present in the rebuilt README on `chore/repo-governance`; absent from `main` |
 
-This is a significant gap. The frontend has components, a type system, validation schemas, and Vitest tests — none of which are gated by any CI.
+Still a real gap: no frontend CI gates `main`. It resolves without editing the
+workflow once both branches reach `main`, since the two halves — the workflow and
+the `.nvmrc` it reads — are simply on different branches today.
 
 ---
 
 ## 5. Red X Diagnosis
 
-The GitHub Actions page shows **all 10 runs completing** in the 1–3 minute range. There is no currently failing workflow on any branch according to the run history visible on GitHub.
+**The red X was a real, reproducible test-suite failure — two of them — not a
+badge or narrative problem.** The first version of this section concluded "there
+is no current test failure; the tests themselves pass," and every one of its
+three hypotheses (missing frontend badge, stale branches, non-conventional
+commit messages) was cosmetic. None of them can turn a run red. That conclusion
+was reached without opening a failing run's logs; opening them takes one command
+and gives the answer immediately.
 
-**However**, the README `tests` badge reports the status of `main` only. The last meaningful commit on `main` (`f71630d`) was a content-free "re-trigger actions workflow" commit — it was pushed specifically to re-run CI. This commit passed.
+### Cause 1 — collection aborted: `ray` was never installed
 
-**The "red X" is most likely:**
+From the logs of run 33885701034 (`test/preprocessing-shap-pipeline`) and
+confirmed on `main`'s run 33063312020:
 
-1. **The missing frontend badge** — the README has only one CI badge and no frontend workflow exists on GitHub, so there is no green frontend badge either. A viewer sees a single badge (tests) with no coverage of the frontend.
+```
+tests/test_federated.py:9: in <module>
+    from src.federated.server import ...
+src/federated/server.py:8: in <module>
+    import ray
+E   ModuleNotFoundError: No module named 'ray'
+231 items collected / 1 error
+!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!
+exit code 2
+```
 
-2. **The stale `feat/shap-explainability` and `test/preprocessing-shap-pipeline` branches** — GitHub's branch list shows these as diverged without PRs, which reads as incomplete/abandoned work.
+A pytest **collection** error exits 2 and aborts the entire run, so not one of
+the 231 collected tests executed. `requirements-advanced.txt` declared
+`flwr==1.33.0`; `src/federated/server.py` imports `ray` at module scope because
+`flwr.simulation` runs the simulated hospital clients on it. Bare `flwr` does not
+depend on `ray` — the `simulation` extra does. It passed locally only because
+`ray` was already present in the developer venv.
 
-3. **The last two commits on `main`** — `"re-trigger actions workflow"` and before that `"Update README to remove team information"` — both non-conventional and uncommitted to any engineering narrative. They are visible as the first thing any visitor sees in the commit list.
+This is why the badge went red on 2026-08-24 and stayed red: every branch
+inherits the same requirements file.
 
-**There is no current test failure.** The tests themselves pass. The repository appearance problem is structural and narrative, not a runtime failure.
+### Cause 2 — a genuinely failing test, hidden behind cause 1
+
+`tests/test_model_card.py::test_changing_the_metrics_file_changes_the_card` fails
+on a clean checkout of `main`, and has since 8e9dbb7 added it. Verified in a
+throwaway `git worktree` on `origin/main`: `1 failed, 30 passed`. CI never
+reported it because collection aborted first.
+
+The card was right and the assertion was wrong: it required `"0.9750" not in
+regenerated` after moving only the headline accuracy, but `0.9750` is also the
+*sweep* accuracy at thresholds 0.50 and 0.70, which that change must not touch.
+
+Fixing only cause 1 would have replaced one red X with a different one.
+
+### Classification
+
+| Question | Answer |
+|---|---|
+| Code failure? | No. `api/`, `src/`, and `scripts/` were correct throughout. |
+| Test failure? | Yes — cause 2, one over-broad assertion. |
+| Environment failure? | Yes — cause 1, a dependency present locally and absent in CI. |
+| Workflow configuration failure? | Only for `frontend.yml` (`.nvmrc` on another branch). `tests.yml` is fine. |
+| Branch-state problem? | No. |
+| Stale workflow? | No. |
+| Dependency problem? | Yes — cause 1, a missing extra, not a missing pin. |
+
+### Resolution
+
+PR [#1](https://github.com/Bereket18/ckd-detection/pull/1),
+`fix/federated-ray-dependency`, one commit per cause:
+
+- `4a93aa2` — `flwr[simulation]==1.33.0` in `requirements-advanced.txt`. The
+  extra pins `ray==2.55.1` on Python 3.11, so `ray` is not listed separately.
+- `86ce805` — the assertion scoped to the row it is about, which is stricter
+  about location rather than weaker. `scripts/make_model_card.py` unchanged.
+
+Run [33957189410](https://github.com/Bereket18/ckd-detection/actions/runs/33957189410):
+**`242 passed in 8.75s`, job green in 1m34s — the first successful run in the
+repository's history.** Nothing was skipped, xfailed, or relaxed.
 
 ---
 
@@ -225,7 +297,7 @@ The current `README.md` on `main` is **substantively strong** — it is one of t
 
 | Problem | Detail |
 |---|---|
-| Single CI badge | Only `tests.yml` badge. No frontend badge (because frontend CI doesn't exist on GitHub yet) |
+| Single CI badge | Only the `tests.yml` badge, and it was red (§5). No frontend badge on `main`, because `frontend.yml` is tracked on `chore/repo-governance` |
 | `MODEL_CARD.md` reference broken | README links to `MODEL_CARD.md` but the file is only on `my-experimental-feature`, not `main` |
 | Description mentions it twice | Repository description says "Using Clinical, Imaging, and **Clinical** Data" — "Clinical" appears twice, "Text" is the missing third modality |
 | "No web frontend" is now outdated | The README was written when the project was CLI-only. The project now has a FastAPI backend and a React frontend in progress. The README still says "No web frontend, no backend server deliberately" |
@@ -396,12 +468,18 @@ research/<description>    experimental/exploratory work that may not merge
 
 ### What to do with each existing branch
 
+> **CORRECTED 2026-09-05** on two rows. `feat/shap-explainability` and
+> `my-experimental-feature` were both assessed by diffing trees, not by reading
+> branch names or dates. The `my-experimental-feature` row was wrong.
+
 | Branch | Recommendation | Reason | Destructive? |
 |---|---|---|---|
 | `main` | Keep; protect | Default, stable branch | No |
-| `feat/shap-explainability` | **Delete from origin after confirming** | Its functional content (`datasets.py`, `shap_utils.py`, tests, CI) is present on `main` via `8e9dbb7`. The branch itself was never PR'd or merged — the work was directly committed to `main` separately. The branch is a dead stub. Confirm by diffing `feat/shap-explainability` against `main` for any content *not* in `main` before deleting. | **YES — see risk register §16** |
-| `test/preprocessing-shap-pipeline` | **Open a PR to `main`** | Contains real unmerged work: the entire FastAPI backend (`api/`), `src/services/`, frontend foundation. Needs to come to `main` via a PR with CI passing. The branch name is misleading — consider renaming to `feat/api-and-frontend-foundation` in a new branch. | No (deleting the old name after PR merge is low-risk) |
-| `my-experimental-feature` | **Push to origin; open PR** | Contains `MODEL_CARD.md` and AUDIT additions that `README.md` already references. Local-only is a data-loss risk. | No |
+| `fix/federated-ray-dependency` | Merge via PR [#1](https://github.com/Bereket18/ckd-detection/pull/1), then delete | The two CI fixes of §5. Green: run 33957189410, 242 passed. | No (a merged branch's content is in `main` by definition) |
+| `feat/shap-explainability` | **Do not merge. Retain, or delete only on your explicit say-so** | Diffed against `main`: **83 insertions, 3358 deletions.** Its "additions" are the *pre-refactor* `chatbot.py`; `src/explain/shap_utils.py` and `tests/test_shap_utils.py` are byte-identical to `main`. Merging it would **regress `main`**. Nothing unique would be lost by deleting it, but nothing is gained either — it costs nothing to keep as history. | **YES to delete — see §16** |
+| `test/preprocessing-shap-pipeline` | **Open a PR to `main`** | Real unmerged work: the FastAPI backend (`api/`), `src/services/`, and the full frontend product surface. The branch name understates it; rename in a fresh branch if desired. | No |
+| `feat/model-card` | **Open a PR to `main`** | `MODEL_CARD.md` and the audit additions that `README.md` already links to. | No |
+| `my-experimental-feature` (local only) | **Nothing to push. Delete only on your explicit say-so** | ~~Push to origin; open PR~~ — wrong. Its tree is **identical** to `origin/feat/model-card` (`git diff` between them is empty), so it is a duplicate carrying the non-conventional message *"Experimental changes without a branch"*. There is no data-loss risk and no unique work: once `feat/model-card` merges, every byte is on `main`. | **YES to delete — see §16** |
 
 ---
 
@@ -491,7 +569,14 @@ git push -u origin feat/my-feature
 
 ### Backend (`tests.yml`) — current state is good
 
-The existing `tests.yml` is well-designed and passing. No changes required to the YAML. The only improvement is ensuring it is the CI gate for all PRs (via branch protection, recommended in §16).
+The `tests.yml` YAML is well-designed and needs no changes. It was red for 12
+days, but the cause was in `requirements-advanced.txt` and one test assertion,
+not in the workflow (§5). It is green as of run 33957189410. The only
+improvement is making it the required gate for all PRs (branch protection, §16).
+
+One live annotation to address: `actions/checkout@v4` and
+`actions/setup-python@v5` are being forced onto Node 24 because Node 20 is
+deprecated on the runners. Bump to `@v5` / `@v6`.
 
 ### Frontend (`frontend.yml`) — must be pushed
 
