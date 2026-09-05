@@ -12,13 +12,16 @@ node_modules
 coverage
 .nyc_output
 
-# Environment files — no secrets may ever appear in VITE_* variables
-# (FRONTEND_PLAN.md Rule 9, architecture §8.1). Use .env.*.example
-# as templates that ARE committed; the real files are not.
+# Environment files — no secret may ever appear in a VITE_* variable
+# (FRONTEND_PLAN.md Rule 9, architecture §8.1), because every VITE_* value is
+# inlined into the bundle and readable in the browser.
+#
+# .env.development and .env.production are therefore tracked on purpose: they are
+# public by construction, they carry only a relative API path and two timeouts,
+# and tests/guards/repository.test.ts reads them to prove it. Only genuinely local
+# overrides are ignored.
 .env
 .env.local
-.env.development
-.env.production
 .env.*.local
 *.local
 

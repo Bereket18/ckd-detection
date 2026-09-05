@@ -36,11 +36,12 @@ ckd-frontend/node_modules/
 ckd-frontend/dist/
 ckd-frontend/.vite/
 ckd-frontend/coverage/
-# .env files — non-secret config only; tracked copies cause drift.
-# Use .env.development.example and .env.production.example as templates.
+# Local/secret env only. .env.development and .env.production ARE tracked on
+# purpose: in a Vite SPA every VITE_* value is inlined into the bundle, so those
+# two files are public by construction and hold nothing but a relative API path
+# and two timeouts. tests/guards/repository.test.ts asserts exactly that, and a
+# guard cannot check a file the repository does not carry.
 ckd-frontend/.env
-ckd-frontend/.env.development
-ckd-frontend/.env.production
 ckd-frontend/.env.local
 ckd-frontend/.env.*.local
 ckd-frontend/*.log
