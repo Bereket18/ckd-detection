@@ -14,7 +14,7 @@ reference the `P0-x` / `P1-x` / `P2-x` identifiers defined here.
 | **Reviewed at commit** | `ca41bbd` (all 7 sprints reported complete) |
 | **Scope** | Full repository: architecture, correctness, security, performance, testing, dependencies, documentation, production-readiness |
 | **Method** | Static inspection of every source file, plus executed verification (test suite, `make -n`, PowerShell parse check, retraining, live agent runs) |
-| **Test suite** | 31 tests passing before → **134 tests passing after** |
+| **Test suite** | 31 tests passing before the audit → **134 after Parts I–VII** → **242 after Part VIII** |
 
 **How to read this**
 
@@ -25,6 +25,7 @@ reference the `P0-x` / `P1-x` / `P2-x` identifiers defined here.
 - [Part V — Dataset assessment](#part-v--dataset-assessment) — is 400 rows enough, and how to add Ethiopian data
 - [Part VI — The dataset-ingestion layer](#part-vi--the-dataset-ingestion-layer) — how a new dataset gets fed in, and what it refuses to do
 - [Part VII — Findings from the second round](#part-vii--findings-from-the-second-round) — four findings that reviewing the fixes exposed
+- [Part VIII — Four capability additions](#part-viii--four-capability-additions) — the dialogue DFA, risk probability, the generated model card, and batch scoring
 
 Severity meanings:
 
@@ -1412,3 +1413,288 @@ would have raised earlier and elsewhere. The hooks were verified directly
 instead, and the reporting path was verified by stub. What remains unverified is
 one thing only: an end-to-end Ray run of the current code on a machine with free
 memory. It should be re-run before the numbers are presented.
+
+---
+
+## Part VIII — Four capability additions
+
+Parts I–VII closed 23 findings. This round is different in kind: nothing here
+fixes a defect. Each item closes a gap that was **demonstrable in the code**
+rather than one that sounded good, and each one is recorded with the decision that
+shaped it — including the two places where the obvious implementation was
+deliberately *not* chosen.
+
+The audit discipline still applies. Every claim below is either measured or
+labelled as unverified, and the two design decisions that could be challenged are
+stated as decisions rather than presented as the only option.
+
+### F1 — The dialogue was a finite automaton nobody could check
+
+**What was there.** `collect_patient_data` was a `for` over the feature list
+wrapping a `while True`, with `continue` on invalid input and `continue` on
+`help`. That is *already* a chain of states with two self-loops and one forward
+edge — the machine existed, implicitly.
+
+**Why that is a gap and not a style preference.** The control flow was correct,
+and unverifiable. There was no object to ask "is a transition defined for every
+input in every state?", no way to enumerate the states, and no way to show a
+consultation can always terminate. Those three questions cannot be answered by
+reading a `while True`; they can only be answered by inspection, which is what
+the rest of this document exists to distrust.
+
+**What was added.** [src/agent/dialogue_fsm.py](src/agent/dialogue_fsm.py) states
+M = (Q, Σ, δ, q₀, F) as data: Q = `{ASK_0 … ASK_{n-1}, DONE}` sized from the
+loaded model's `preprocessor.feature_columns`, Σ = `{VALID, SKIP, HELP, INVALID}`,
+δ advancing on `VALID`/`SKIP` and self-looping on `HELP`/`INVALID`, q₀ = `ASK_0`,
+F = `{DONE}`.
+
+**The decision that matters: the spec RUNS.** `collect_patient_data` now drives
+this table rather than describing it. A formal description sitting beside code
+that hand-rolls the same logic is two definitions that drift, which is exactly
+what **P1-1** records (an accuracy figure pasted into three files, false in all
+three the moment the pipeline changed). A specification that does not execute is a
+comment with better typography. Observable behaviour is byte-identical: same
+prompts, same help line, same "a typical value will be estimated" note.
+
+**Why the alphabet is four symbols.** A patient types arbitrary strings, and that
+set is infinite — a machine over raw input would not be finite-state in any useful
+sense. `classify()` reduces each raw answer to one of four symbols *first*,
+delegating to the existing `validate_numeric` / `validate_binary` rather than
+re-deriving what counts as valid (a second copy of that judgement is the defect
+**P1-8** was filed for). Unbounded input → finite token alphabet → finite-state
+recognizer over those tokens is the standard lexer/parser separation, and it is
+what makes the DFA claim true rather than decorative.
+
+**Why a DFA and not a PDA.** δ depends only on the current state and the input
+symbol; there is no auxiliary storage. The machine never needs to recall *how* it
+reached `ASK_i`, only that it is there. Collected answers accumulate in a dict
+*outside* the machine — the transducer's output tape, not state, influencing no
+transition. A PDA becomes necessary when a dialogue nests ("for each medication,
+ask its dose, then return to where you were"), because the return point must be
+stacked and the language of well-nested transcripts is not regular. This
+questionnaire is flat: n independent questions in a fixed order, so a PDA here
+would carry a stack that is provably always empty. Choosing the weakest machine
+that suffices, and being able to say why, is the substance of the claim.
+
+The accepted language is therefore regular: `((HELP|INVALID)*(VALID|SKIP)){n}`.
+
+**Four properties, now checkable.** `describe()` recomputes all four at call time,
+so the printed report cannot claim a machine is total after an edit that made it
+partial — the same principle as generating the model card:
+
+| property | statement | test |
+|---|---|---|
+| total | δ defined for every (state, symbol) ∈ Q × Σ | `test_delta_is_total_over_q_cross_sigma` |
+| deterministic | exactly one target per pair; δ is a function | `test_delta_is_deterministic` |
+| reachable | every state reachable from q₀ (BFS closure) | `test_every_state_is_reachable_from_q0` |
+| terminating | `DONE` reachable from every state — no dead ends | `test_done_is_reachable_from_every_state` |
+
+**Verified.** `python -m src.agent.chatbot --show-fsm` prints 25 states for the
+canonical model, a total δ table, `((HELP|INVALID)*(VALID|SKIP)){24}`, and
+`total yes / deterministic yes / reachable 25/25 / terminating yes`. Executed, not
+inferred. [tests/test_dialogue_fsm.py](tests/test_dialogue_fsm.py) asserts the
+same properties independently, plus a reduced-feature machine (7 states from a
+6-feature preprocessor) and the degenerate zero-field machine, which is already
+accepting rather than an error.
+
+### F2 — A screening tool that could not distinguish 51% from 99%
+
+**What was there.** `run_agent` called `model.predict()` — a hard 0/1. A patient
+at the decision boundary and a patient the model was certain about saw
+byte-identical output. For a screening tool that is the difference between
+"monitor this" and "go today", and `predict_proba` was already in use inside
+`evaluate()`, so the information existed and was discarded at the last step.
+
+**Decision 1 — measure the calibration, do not change the model.** The obvious
+move is `CalibratedClassifierCV`. It was **not** made, and the reason is recorded
+because it is a trade-off rather than a free improvement: wrapping the selected
+model changes the saved model, and with it the headline recall, which
+`train_baseline.py` gates at `config.MIN_ACCEPTABLE_RECALL`. Trading measured
+recall for better-shaped probabilities is a real decision that should be made
+deliberately and measured, not slipped in days before a deadline.
+
+So the gap is **reported** instead:
+
+- `brier_score()` — the mean squared error of the predicted probabilities. One
+  number, well defined at n=80.
+- A reliability diagram is **not** reported. Ten bins over 80 rows leaves roughly
+  eight patients per bin; the resulting curve would be mostly noise, and a noisy
+  curve presented as a calibration assessment is worse than no curve.
+- Brier conflates calibration with discrimination, so a low score is not proof of
+  calibration. The caveat therefore stands *regardless of the number*, and the
+  agent prints it attached to every score — the string and the caveat are built in
+  one expression so neither can be displayed without the other.
+
+**Decision 2 — three bands annotating two verdicts, not three outcomes.** The
+verdict still comes from `model.predict()`, i.e. the 0.5 boundary, so the measured
+accuracy and recall keep describing exactly what a user is shown. `risk_band()`
+qualifies it via `config.RISK_BAND_BOUNDS = (0.35, 0.65)`, defined on **P(CKD)**
+rather than on "confidence in the shown verdict" so the number and the verdict can
+never appear to disagree. MODERATE means "near the decision boundary, on either
+side": a LOWER RISK verdict at P = 0.42 is correctly MODERATE, because a couple of
+trees voting differently would have flipped it, and the agent says so outright.
+
+The bounds are wide on purpose. They are a judgement about when to tell a patient
+not to rely on a result without a lab test — not a quantity estimated from data,
+and explicitly **not** derived from the threshold sweep.
+
+**Decision 3 — the threshold sweep is reported, not used for selection.**
+`threshold_sweep()` measures recall, specificity, precision, accuracy, FN and FP
+at nine thresholds. It is computed on the **held-out test set**, so choosing an
+operating point by reading down the recall column would be selecting a parameter
+using test data — the same class of error as the **P0-3** leakage, arrived at from
+a different direction. The deployed threshold stays 0.5. Both the code and the
+printed output say this, because a table of alternatives printed without that
+sentence reads as though the best row was chosen.
+
+`n_fn` is in the table beside the rates deliberately: at 80 test rows, "recall
+0.9400" is three missed patients, and the number of patients is the quantity that
+matters clinically.
+
+### F3 — No model card, in a project whose worst defect was a hand-copied metric
+
+**What was there.** Nothing. Performance figures lived in the README, in
+docstrings, and in AUDIT.md.
+
+**Why generated rather than written.** **P1-1** is the whole argument: the
+baseline accuracy was typed into three files and all three became false the moment
+the leakage fix changed the pipeline. A model card is the single document where a
+stale number is least defensible, because it is the artifact someone quotes. So
+[scripts/make_model_card.py](scripts/make_model_card.py) reads every figure from
+`config.TABULAR_METRICS_PATH` and **no number is typed into the script**. The
+qualitative sections — intended use, out-of-scope use, limitations, the
+calibration argument — *are* written by hand, because they are judgements about
+the model and do not belong in a JSON file. The rule that keeps that honest is
+that they contain no measurement, and there is a test asserting it.
+
+**Honest degradation.** A metrics file from an older run lacks `brier_score` and
+`threshold_sweep`. Those sections then render "not in this metrics file" and name
+the command that produces it, rather than a plausible-looking substitute. Same for
+an absent confusion matrix or provenance record. A section that quietly falls back
+to a default is how a card comes to describe a model that was never trained.
+
+**Enforceable, not advisory.** `python scripts/make_model_card.py --check` exits 1
+if the card on disk differs from what the current metrics would generate — a
+read-only check suitable for CI, and the reason a hand edit cannot survive
+unnoticed.
+
+### F4 — The ingestion layer had nowhere to send a loaded frame
+
+**What was there.** [src/data/datasets.py](src/data/datasets.py) (Part VI) can map
+a foreign CKD CSV onto the canonical schema. But the only way to obtain a
+prediction was to answer 24 interactive questions, so the model could not be
+evaluated on a dataset it was not trained on **at all**. "Train on UCI, test on
+St. Paul's" was not a slow operation; it was an impossible one. That made the
+ingestion layer half a feature.
+
+**What was added.** [scripts/predict.py](scripts/predict.py) scores a CSV,
+appending `prediction`, `p_ckd`, `risk_band` and `n_imputed` per row, with
+`--dataset` to apply a registered spec's mapping and `--explain` for per-row SHAP
+drivers.
+
+**One definition of encoding, not two.** The batch path needs exactly what
+`answers_to_feature_row` does, on many rows. Duplicating it would have recreated
+two documented defects at once: **P1-8** (a second copy of the binary map) and
+**P0-3** (preprocessing re-implemented in four scripts, which is how the leakage
+spread). So `encoded_feature_frame(df, preprocessor)` in
+[src/data/preprocess.py](src/data/preprocess.py) is the single definition, and the
+interactive path is a thin wrapper around it that keeps the one guard specific to
+having asked a human: a deliberate skip (`None`) is imputed, but an answer that
+was *given* and failed to parse raises rather than being silently imputed.
+
+The plan for this round named that function `rows_to_feature_frame` and had
+`answers_to_feature_row` call it with a one-row frame. What was built is the
+same property with the split one level lower —
+`encoded_feature_frame` (unlearned, stage 1) versus `preprocessor.transform`
+(learned, stage 2) — because both callers genuinely need the intermediate frame
+and cannot reconstruct it afterwards: `predict.py` counts its NaNs per row for
+`n_imputed`, and the agent uses them to tell a skip from a parse failure. A
+wrapper hiding both steps would have forced one of them to recompute it. The
+one-definition property is asserted directly:
+`test_the_batch_and_interactive_encodings_agree_row_for_row` compares the two
+paths cell-by-cell at `rtol=1e-12`.
+
+**`n_imputed` is not bookkeeping.** A nearly empty row otherwise receives a
+confident-looking score with nothing to signal how little of it came from the
+patient. It is the batch analogue of the agent's "you skipped N field(s)" note,
+and `print_summary` warns explicitly about rows with over half their features
+imputed. An entirely **absent** column is a different case and is **refused**:
+imputing it would give every row the same fabricated value, which is the same
+argument Part VI makes for refusing `--features all` on a partial source.
+
+**The half that matters most.** If the input carries a label column, the script
+**evaluates**, reusing `tabular_model.evaluate()` unchanged so the numbers are
+produced by exactly the code that produced the reported baseline metrics — a
+second evaluation function is how two "recall" figures come to mean different
+things. The leakage warning is printed every time, not conditionally: the script
+cannot tell from a CSV whether those rows were training rows, so it says so rather
+than guessing.
+
+`load_dataset` gained `require_target=False` for this path, and the relaxation is
+deliberately narrow — a label column that is *present* and unreadable still raises,
+whether or not the caller intends to train, because accepting it would let
+`predict.py` evaluate against silently-NaN labels. There is a test for exactly
+that narrowness.
+
+### Coverage
+
+Test functions per file, as they stand after this round (parametrized cases
+collect as more than one test each, so pytest's total is higher):
+
+| file | test functions | what they pin down |
+|---|---|---|
+| `tests/test_dialogue_fsm.py` (new) | 29 | the four formal properties, δ totality and determinism, the accepted language checked by enumerating transcripts, `classify()` over every documented skip word, reduced-feature and zero-field machines |
+| `tests/test_predict.py` (new) | 20 | batch/interactive agreement, `n_imputed` exactness including the duplicate-index case, the refusals, the evaluation branch firing only with labels |
+| `tests/test_model_card.py` (new) | 25 | every figure traced to the metrics file, honest degradation on an older file, the `--check` staleness gate |
+| `tests/test_tabular_model.py` | 31 | extended with band boundaries and totality, Brier against a hand-computed value, sweep monotonicity, and the 0.5 row matching `evaluate()` |
+| `tests/test_chatbot.py` | 29 | extended with the one-definition guard and the `--show-fsm` entry point |
+| `tests/test_datasets.py` | 25 | extended with `require_target=False`, and that it weakens nothing else |
+
+Two tests were written wrong before being written right, and both are recorded
+here rather than quietly amended:
+
+- an extreme-threshold test asserted `specificity == 1.0` at threshold 1.0. A
+  logistic regression can saturate a probability to exactly 1.0, so a misclassified
+  healthy patient would have failed the assertion for a floating-point reason
+  unrelated to the property. Rewritten to assert the 0.0-threshold row exactly and
+  the 1.0-threshold row only relative to it;
+- a model-card test asserted that changing the top-level accuracy removed the old
+  figure from the card entirely. It does not: `0.9750` is also the accuracy of two
+  threshold-sweep rows, which legitimately do not change. The assertion was
+  testing something untrue and now targets the performance row specifically. This
+  one failed in the suite and was caught there, which is the system working.
+
+**Suite status: 242 passed, 3 warnings in 58.64s** (the three warnings are
+`PendingDeprecationWarning`s from inside `shap`, not from this project). One of
+those 242 is the model-card assertion described immediately above, which failed
+first and passes now.
+
+### What is verified, and what is not
+
+Verified by execution, in this order, with the observed result recorded:
+
+| # | command | observed |
+|---|---|---|
+| 1 | `pytest -q` | **242 passed**, 3 warnings, 58.64s |
+| 2 | `python scripts/train_baseline.py` | still selects **`random_forest`** at **0.9750 accuracy / 1.0000 recall / 0.9333 specificity**, identical to the pre-round figures — the `evaluate()` additions perturbed nothing. New: `brier 0.0214`, and the sweep table printed under its "REPORTED, NOT USED FOR SELECTION" heading |
+| 3 | `saved_models/tabular_metrics.json` compared key-by-key against the pre-retrain copy | gains exactly `brier_score` and `threshold_sweep`; **every pre-existing key byte-identical**, including all four interval bounds to the last digit. (Not a `git diff`: `saved_models/*` is gitignored, so the comparison was made against the file's recorded prior contents) |
+| 4 | `python -m src.agent.chatbot --show-fsm` | 25 states, δ total, `((HELP\|INVALID)*(VALID\|SKIP)){24}`, and `total yes / deterministic yes / reachable 25/25 / terminating yes` |
+| 5a | live consultation, clear CKD profile | `HIGHER RISK`, `P(CKD) = 1.00 (HIGH band)`, the uncalibrated-score caveat, and three drivers "pushed your risk up" |
+| 5b | live consultation, healthy profile | `LOWER RISK`, `P(CKD) = 0.05 (LOW band)`, drivers "pushed your risk down" |
+| 5c | live consultation exercising all four symbols | `help` re-asked the same field (HELP self-loop); `sixty` produced "isn't a number" and re-asked (INVALID self-loop); `su=23` produced the out-of-range complaint naming `su (0-5…)` and re-asked; three `unknown`s advanced and the result reported "you skipped 3 field(s) (hemo, sc, sg)" |
+| 6a | `predict.py` on an 8-row labelled CSV | 8 rows in, 8 out; 4/4 predicted correctly each way; the evaluation block printed with intervals **and** the leakage caveat |
+| 6b | the same row scored interactively | batch `p_ckd = 0.9946`, interactive `0.9945922682195827` — the same number, agreeing to the batch column's full 4-dp precision |
+| 6c | 3 cells blanked in one row, 20 in another | `imputed feature cells: 23 total, max 20 in one row (of 24)`, and the WARNING naming row index `[2]` |
+| 6d | the same CSV with `sc` and `hemo` columns removed | refused, naming both columns and the "fabricated measurement" reason |
+| 6e | the same CSV with the label column removed | scored, and `nothing to evaluate against -- predictions only` |
+| 7 | `python scripts/make_model_card.py`, then `--check` | card written; every figure matches `tabular_metrics.json`; `--check` reports "up to date" and exits 0 |
+
+Not verified: `scripts/train_imaging.py` and `train_fusion.py` remain unrunnable
+here (the ~12,446-image Kaggle download is absent), and the end-to-end Ray
+federated run is still blocked by the memory limitation recorded at the end of
+Part VII. Neither was touched by this round.
+
+Out of scope by decision, recorded so the absences are not read as oversights: no
+web or GUI front end (see README design decisions); no `CalibratedClassifierCV`
+(F2); no Ethiopian data acquisition, which is blocked on a pending request, not on
+code.

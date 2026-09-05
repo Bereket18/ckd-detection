@@ -80,7 +80,7 @@ All figures are from an 80-row held-out test set with Wilson 95% confidence inte
               └──────────────────────────────────────────────────────┘
 ```
 
-`(*)` The FastAPI backend and React frontend are on the `feat/api-and-frontend-foundation` branch, pending merge. The CLI agent is on `main`.
+`(*)` The FastAPI backend, the React frontend, and the CLI agent are all on `main`.
 
 ---
 
@@ -142,7 +142,7 @@ python scripts/predict.py --input clinic.csv --dataset clinic
 
 Appends `prediction`, `p_ckd`, `risk_band`, and `n_imputed` to every row. Warns explicitly about rows where over half the features were imputed.
 
-### FastAPI inference backend *(pending merge)*
+### FastAPI inference backend
 
 Four endpoints verified against a live server:
 
@@ -241,9 +241,24 @@ Three other entry points:
 python -m src.agent.chatbot --show-fsm          # inspect the DFA
 python scripts/predict.py --input patients.csv --output scored.csv
 python scripts/make_model_card.py               # regenerate MODEL_CARD.md from metrics
+python scripts/predict.py --input export.csv --dataset ethiopian   # apply that spec's column mapping
+python scripts/predict.py --input patients.csv --explain           # top-3 SHAP drivers per row
 ```
 
-### FastAPI backend *(after feat/api-and-frontend-foundation is merged)*
+`--input` names the file to read; `--dataset` names a **registered
+`DatasetSpec`** whose `column_map` / `value_map` is applied to it, so a foreign
+export is mapped by the spec that already describes that source rather than by
+renaming headers by hand. `python scripts/train_baseline.py --list-datasets`
+prints what is registered (`uci` and the `ethiopian` placeholder).
+
+It appends `prediction`, `p_ckd`, `risk_band`, and **`n_imputed`** to every input
+row. That last column is not bookkeeping: a nearly empty row otherwise gets a
+confident-looking score with nothing to signal how little of it came from the
+patient, and the summary warns outright about rows with over half their features
+imputed. An entirely **absent** column is refused rather than imputed, for the
+same reason `--features all` is refused across mismatched schemas.
+
+### FastAPI backend
 
 ```bash
 pip install -r requirements.txt
@@ -251,15 +266,19 @@ uvicorn api.main:app --port 8000
 # → http://localhost:8000/docs
 ```
 
-### React frontend *(after merge)*
+### React frontend
 
 ```bash
 cd ckd-frontend
-cp .env.development.example .env.development
 npm ci
 npm run dev
 # → http://localhost:5173
 ```
+
+`.env.development` is committed and needs no editing: it sets
+`VITE_API_BASE_URL=/api`, and the Vite dev proxy forwards `/api/*` to FastAPI on
+:8000, so the browser makes a same-origin request and CORS is never exercised.
+Start the backend first, or `/health` reports the API as unavailable.
 
 ---
 
@@ -275,7 +294,8 @@ src/
     load_imaging.py          # Kaggle CT dataset fetch + train/val/test split
     pair_modalities.py       # synthetic tabular-imaging pairing (SIMULATION — documented)
   models/
-    tabular_model.py         # baseline: candidate comparison, tuning, evaluation, Wilson CIs
+    tabular_model.py         # baseline: candidate comparison, tuning, evaluation, Wilson CIs,
+                             #   risk bands, Brier score, threshold sweep
     imaging_model.py         # ResNet-18 transfer learning
     text_model.py            # synthetic clinical notes + TF-IDF
     fusion_model.py          # multimodal fusion (tabular MLP + imaging encoder + text encoder)
@@ -285,31 +305,36 @@ src/
   explain/
     shap_utils.py            # explainer dispatch, sign-correct sentence generation
   agent/
+    dialogue_fsm.py          # the questionnaire as an explicit DFA — the spec the loop executes
     chatbot.py               # conversational interface — the CLI user-facing layer
-    dialogue_fsm.py          # DFA specification; chatbot.py executes the table
   services/
-    clinical_prediction.py   # framework-independent inference service (used by API)
-api/                         # FastAPI application (pending merge)
+    clinical_prediction.py   # framework-independent inference service (used by the API)
+api/                         # FastAPI application
   main.py
   schemas.py                 # Pydantic models for all 24 fields + response types
   routes/
     health.py · model.py · assessment.py
-ckd-frontend/                # React web frontend (pending merge)
+ckd-frontend/                # React web frontend (Vite 8 · React 19 · Tailwind 4)
   src/
     components/              # layout, UI primitives, provenance labels
-    routes/                  # page-level components
+    routes/                  # page-level components, one per product area
     lib/                     # API client, query hooks, state, storage
-    types/                   # TypeScript types mirroring backend contract
-    utils/                   # field metadata, validation schemas
-  tests/                     # Vitest suite (475 tests)
-scripts/                     # one entry point per training/data task
-  train_baseline.py · train_federated.py · train_fusion.py
-  predict.py · make_model_card.py · prepare_data.py
+    types/                   # TypeScript types mirroring the backend contract
+    content/                 # editorial copy; key parity with /model is tested
+  tests/                     # Vitest suite (513 tests)
+scripts/
+  train_baseline.py          # trains, evaluates, gates on recall, saves metrics + provenance
+  predict.py                 # batch scoring: score a CSV, and evaluate it if it has labels
+  make_model_card.py         # regenerates MODEL_CARD.md from the metrics file (--check in CI)
+  ...                        # one entry point per remaining training/data task
 notebooks/                   # executed EDA (missingness, class balance, distributions)
-tests/                       # pytest suite (134 tests)
+tests/                       # pytest — 242 tests across every module
+MODEL_CARD.md                # generated: intended use, measured performance, limitations
+saved_models/                # trained models + measured metrics (regenerable, not committed)
 data/
   raw/uci_ckd.csv            # UCI CKD dataset (committed, CC BY 4.0)
   README.md                  # data sourcing, licensing, how to add a dataset
+AUDIT.md                     # engineering audit + full record of every fix applied
 ```
 
 ---
