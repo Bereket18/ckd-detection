@@ -46,14 +46,11 @@ ckd-frontend/.env.local
 ckd-frontend/.env.*.local
 ckd-frontend/*.log
 
-# Kiro IDE — spec and task metadata are IDE state, not source
-# The .md spec documents (design.md, requirements.md, tasks.md) ARE kept
-# as historical documentation; only the IDE-internal config files are excluded.
-.kiro/specs/**/.config.kiro
-.kiro/specs/**/tasks.meta.json
-# Kiro temp task files generated during spec execution
-.kiro/specs/**/TASK_*.md
-.kiro/specs/**/*.py
+# IDE spec-workflow state — machine-written editor state, not source.
+# The three specification documents that used to live in here are real project
+# documentation and are now tracked at docs/archive/frontend-spec/, so the whole
+# hidden directory is ignored rather than filtered file by file.
+.kiro/
 
 # OS
 .DS_Store
