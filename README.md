@@ -153,16 +153,16 @@ Four endpoints verified against a live server:
 | `POST /predict` | Single patient assessment with optional SHAP explanation |
 | `POST /predict/batch` | CSV or JSON batch scoring |
 
-### React frontend *(in progress — `feat/api-and-frontend-foundation`)*
+### React frontend
 
-Vite 8 · React 19 · TypeScript (strict) · Tailwind · React Router 7 · Zod validation · React Query
+Vite 8 · React 19 · TypeScript (strict) · Tailwind 4 · React Router 7 · Zod validation · TanStack Query
 
-- Schema-driven assessment form (field definitions read from `/openapi.json` — no hardcoded field list)
+- Schema-driven assessment form (field list and order from `/model`, ranges and enums from `/openapi.json` — no hardcoded field list)
 - Results page with risk band, CKD score, confidence caveat, SHAP explanation
-- Provenance system: VERIFIED / PROVISIONAL / SIMULATION / PLANNED badges throughout the UI
+- Provenance system: VERIFIED / PROVISIONAL / SIMULATION / PLANNED / NOT VERIFIED badges throughout the UI
 - WCAG 2.1 AA accessibility: skip links, ARIA landmarks, focus management, keyboard navigation
-- Security: path filter blocks server-supplied filesystem paths from ever rendering in the browser
-- 475 Vitest tests across 20 suites
+- Security: a path filter blocks server-supplied filesystem paths from ever rendering in the browser
+- 513 Vitest tests across 21 suites, run in CI by `.github/workflows/frontend.yml`
 
 ---
 
