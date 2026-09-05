@@ -9,8 +9,10 @@ __pycache__/
 venv/
 .venv/
 
-# Environment variables / secrets
+# Environment variables / secrets — never commit real keys or tokens
 .env
+.env.local
+.env.*.local
 
 # Data (never commit REAL patient data)
 data/raw/*
@@ -19,26 +21,37 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
-# Trained models (large binary files)
+# Trained models (large binary files — regenerable via scripts/train_baseline.py)
 saved_models/*
 !saved_models/.gitkeep
 
 # MLflow local tracking
 mlruns/
 
-# Frontend (ckd-frontend/)
+# Frontend — root-level node_modules from any accidental npm/vite invocations
+node_modules/
+
+# Frontend — ckd-frontend build and install artifacts
 ckd-frontend/node_modules/
 ckd-frontend/dist/
 ckd-frontend/.vite/
 ckd-frontend/coverage/
+# Local/secret env only. .env.development and .env.production ARE tracked on
+# purpose: in a Vite SPA every VITE_* value is inlined into the bundle, so those
+# two files are public by construction and hold nothing but a relative API path
+# and two timeouts. tests/guards/repository.test.ts asserts exactly that, and a
+# guard cannot check a file the repository does not carry.
 ckd-frontend/.env
 ckd-frontend/.env.local
-ckd-frontend/.env.production
+ckd-frontend/.env.*.local
 ckd-frontend/*.log
 
-# Kiro temp files
-.kiro/specs/**/TASK_*.md
-.kiro/specs/**/*.py
+# IDE spec-workflow state — machine-written editor state, not source.
+# The three specification documents that used to live in here are real project
+# documentation and are now tracked at docs/archive/frontend-spec/, so the whole
+# hidden directory is ignored rather than filtered file by file.
+.kiro/
 
 # OS
 .DS_Store
+Thumbs.db

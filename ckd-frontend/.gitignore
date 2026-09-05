@@ -1,3 +1,30 @@
+# Build output
+dist
+dist-ssr
+
+# Dependencies
+node_modules
+
+# Vite cache
+.vite
+
+# Test coverage
+coverage
+.nyc_output
+
+# Environment files — no secret may ever appear in a VITE_* variable
+# (FRONTEND_PLAN.md Rule 9, architecture §8.1), because every VITE_* value is
+# inlined into the bundle and readable in the browser.
+#
+# .env.development and .env.production are therefore tracked on purpose: they are
+# public by construction, they carry only a relative API path and two timeouts,
+# and tests/guards/repository.test.ts reads them to prove it. Only genuinely local
+# overrides are ignored.
+.env
+.env.local
+.env.*.local
+*.local
+
 # Logs
 logs
 *.log
@@ -7,26 +34,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Test coverage
-coverage
-.nyc_output
-
-# Environment variables
-.env.local
-.env.*.local
-
-# Editor directories and files
+# Editor
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS
+.DS_Store
+Thumbs.db

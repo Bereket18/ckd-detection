@@ -1,0 +1,67 @@
+# Frontend checks.
+#
+# Separate from `tests.yml` (the backend pytest workflow) on purpose: the two have
+# different runtimes, different caches, and different failure meanings, and the
+# backend workflow is not modified by the frontend phase. Nothing in this file
+# runs Python, and nothing in `tests.yml` runs Node.
+#
+# The Phase 0 audit found a file with 50 TypeScript errors sitting committed and
+# "green" because no workflow ever compiled the frontend. These four steps are
+# exactly the gate that would have caught it.
+name: frontend
+
+on:
+  push:
+    paths:
+      - 'ckd-frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    paths:
+      - 'ckd-frontend/**'
+      - '.github/workflows/frontend.yml'
+
+permissions:
+  contents: read
+
+# A new push supersedes an in-flight run on the same ref.
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ckd-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # `.nvmrc` is the single source of the Node version, so CI and a developer
+      # machine cannot drift apart. `package.json` `engines` records the wider
+      # range the code is expected to work on.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ckd-frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: ckd-frontend/package-lock.json
+
+      # `ci`, not `install`: fail on a lockfile that disagrees with package.json
+      # rather than quietly resolving something new.
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Lint
+        # --max-warnings=0: a warning nobody fails on is a warning that
+        # accumulates. Phase 0 found 50 committed type errors for that reason.
+        run: npx eslint . --max-warnings=0
+
+      - name: Test
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
