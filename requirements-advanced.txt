@@ -19,7 +19,19 @@ torch==2.13.0
 torchvision==0.28.0
 
 # Federated learning simulation (Sprint 5)
-flwr==1.33.0
+#
+# The `simulation` extra, not bare `flwr`. src/federated/server.py imports
+# `ray` directly (flwr.simulation runs the simulated hospital clients on it),
+# and the bare install does not carry it -- so `pytest` could not even collect
+# tests/test_federated.py in a clean environment, which is why every CI run
+# from 2026-08-24 onward failed at collection with
+# `ModuleNotFoundError: No module named 'ray'`. It passed locally only because
+# ray happened to be installed there.
+#
+# The extra pins ray itself, so it is not repeated here: flwr 1.33.0 requires
+# ray==2.55.1 on Python 3.11, which is the version the reported federated
+# result (98.75% vs 100% centralized) was measured with.
+flwr[simulation]==1.33.0
 
 # Explainability (Sprint 6)
 shap==0.51.0
