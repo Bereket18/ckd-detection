@@ -128,20 +128,23 @@ def test_every_measured_figure_in_the_card_is_the_metrics_files_figure(card):
 def test_changing_the_metrics_file_changes_the_card(card_env, card):
     """
     Stated as the property rather than as a rendering check: the card TRACKS the
-    file. Move accuracy in the metrics and the accuracy row moves with it, with no
-    stale copy left behind.
+    file. If accuracy moves, the old figure is gone from the row that reports it
+    -- there is nowhere for a stale copy to survive.
 
-    Asserted on the performance row specifically, not on the whole card: 0.9750 is
-    also the accuracy of two threshold-sweep rows, and those legitimately do not
-    change when the top-level figure does. An assertion that the string vanishes
-    from the entire document would be testing something untrue.
+    Scoped to that row on purpose. A bare `"0.9750" not in regenerated` would be
+    asserting something the card cannot satisfy and should not have to: 0.9750 is
+    also the *sweep* accuracy at thresholds 0.50 and 0.70, and those legitimately
+    do not change when the top-level figure does. The earlier unscoped form
+    failed for exactly that reason -- the card was right and the assertion was
+    wrong.
     """
     metrics_path, _ = card_env
     worse = {**METRICS, "accuracy": 0.5}
     regenerated = make_model_card.build_card(worse, metrics_path)
 
-    assert "| accuracy | 0.9750 |" in card
-    assert "| accuracy | 0.9750 |" not in regenerated
+    measured_row = f"| accuracy | {METRICS['accuracy']:.4f} |"
+    assert measured_row in card
+    assert measured_row not in regenerated
     assert "| accuracy | 0.5000 |" in regenerated
 
 
