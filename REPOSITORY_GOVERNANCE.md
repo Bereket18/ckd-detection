@@ -203,7 +203,7 @@ If a backend deployment ever requires credentials (database URLs, service keys),
 | `README.md` | Project overview and quick start |
 | `AUDIT.md` | Engineering audit findings and fixes |
 | `MODEL_CARD.md` | Model performance, limitations, intended use |
-| `FRONTEND_PLAN.md` | Frontend requirements (supersedes `.kiro/specs/`) |
+| `FRONTEND_PLAN.md` | Frontend requirements (supersedes `docs/archive/frontend-spec/`) |
 | `FRONTEND_ARCHITECTURE.md` | Frontend design, routes, data flow, ADRs |
 | `FRONTEND_TEST_PLAN.md` | Frontend test matrix and CI specification |
 | `data/README.md` | Data sourcing, licensing, how to add a dataset |
@@ -214,7 +214,8 @@ If a backend deployment ever requires credentials (database URLs, service keys),
 - If a number appears in a document, its source must be stated. Hardcoded metrics become lies when the pipeline changes. Use `scripts/make_model_card.py --check` to detect staleness.
 - Do not duplicate information across documents. One document owns a fact; others reference it.
 - When behaviour changes, update the documentation in the same PR.
-- Historical documents (`AUDIT.md`, `.kiro/specs/`) are retained as-is. They are not updated to reflect current state — that is what the current-state documents are for.
+- Historical documents (`AUDIT.md`, `docs/archive/`) are retained as-is. They are not updated to reflect current state — that is what the current-state documents are for.
+- Superseded documents belong under `docs/archive/<topic>/` with a `README.md` stating what replaced them. Do not leave them where a reader could mistake them for current, and do not file them in hidden or tool-specific directories.
 
 ---
 

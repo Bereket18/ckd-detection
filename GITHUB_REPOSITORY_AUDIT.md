@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/Bereket18/ckd-detection
 **Audit date:** 2026-09-04
-**Audited by:** Kiro (Phase A — no changes applied)
+**Audited by:** AI coding agent (Phase A — no changes applied)
 **Audit scope:** Full repository state as found — GitHub, local working tree, all branches, CI, documentation, security, structure
 
 ---
@@ -101,7 +101,7 @@ This branch diverged from `f71630d` — the current main tip. It is **6 commits 
 | Commit | Message | Content |
 |---|---|---|
 | `12d6089` | `ci: force trigger actions workflow` | Accidental trigger commit |
-| `31d1660` | `Add FastAPI backend and frontend foundation` | FastAPI app (`api/`), Pydantic schemas, `.kiro/specs/`, frontend TypeScript types |
+| `31d1660` | `Add FastAPI backend and frontend foundation` | FastAPI app (`api/`), Pydantic schemas, the frontend specification documents (since archived at `docs/archive/frontend-spec/`), frontend TypeScript types |
 | `f58a468` | `Add React app entry point and initial UI components` | `App.tsx`, `FormSection`, `NumericInput`, basic CSS, test stubs |
 | `24e5c96` | `Document corrupted service files and update gitignore` | `CORRUPTED_FILES.md` (now deleted), gitignore changes |
 | `5a7e8d2` | `Add clinical prediction service for API backend` | `src/services/clinical_prediction.py`, service layer |
@@ -268,14 +268,19 @@ The repository root has **8 markdown documents** plus a `.txt` license file:
 
 ### Duplicated/superseded documentation
 
-The `.kiro/specs/ckd-frontend/` directory contains `requirements.md`, `design.md`, `tasks.md`, and `tasks.meta.json` — which `FRONTEND_PLAN.md` explicitly supersedes. The spec files are tracked in git (committed on `test/preprocessing-shap-pipeline`). `FRONTEND_PLAN.md` itself documents this: *"This document supersedes `.kiro/specs/ckd-frontend/` (retained as historical documentation)."*
+The hidden `.kiro/specs/ckd-frontend/` directory contains `requirements.md`, `design.md`, `tasks.md`, and `tasks.meta.json` — which `FRONTEND_PLAN.md` explicitly supersedes. The spec files are tracked in git (committed on `test/preprocessing-shap-pipeline`). `FRONTEND_PLAN.md` itself documents the supersession.
 
-Having both in the repo is acceptable if clearly labelled superseded, but the `.kiro/` directory also contains IDE-specific metadata (`.config.kiro`, `tasks.meta.json`) that serves no purpose for other contributors.
+Having both in the repo is acceptable if clearly labelled superseded, but that hidden directory also contains editor state (`.config.kiro`, `tasks.meta.json`) that serves no purpose for other contributors.
+
+> **RESOLVED.** The three specification documents now live at `docs/archive/frontend-spec/` with a
+> `README.md` explaining what they are and what replaced them; git recorded the move as a rename, so
+> `git log --follow` still reaches `31d1660`. The two editor-state files were untracked with
+> `git rm --cached` (they remain on disk) and the hidden directory is now ignored wholesale.
 
 ### Missing documentation
 
 - No `CONTRIBUTING.md` or equivalent development guide for new contributors
-- No `docs/` directory — all documentation is at root level
+- No `docs/` directory — all documentation is at root level *(partly resolved: `docs/archive/` now exists for superseded documents; current-state documents remain at root)*
 - `data/README.md` exists and is good (dataset sourcing, ingestion steps)
 - `MODEL_CARD.md` is on `my-experimental-feature` branch but has never reached `main`
 
@@ -363,14 +368,17 @@ ckd-detection/
 
 There is a `node_modules/` directory at the project root containing only a `.vite/` cache subdirectory. This appeared from running `vite` or `npm install` at the root (there is no `package.json` at root). It is not tracked in git, but it is also **not covered by the root `.gitignore`**. The root `.gitignore` only ignores `ckd-frontend/node_modules/`, not `node_modules/` at root. If anyone were to run `git add .`, this directory would be staged.
 
-### `.kiro/` IDE directory in git
+### Editor spec directory in git
 
-`.kiro/specs/ckd-frontend/` is committed to git on the `test/preprocessing-shap-pipeline` branch. This includes:
-- `.config.kiro` — IDE configuration file
-- `tasks.meta.json` — IDE task tracking JSON
+The hidden `.kiro/specs/ckd-frontend/` directory is committed to git on the `test/preprocessing-shap-pipeline` branch. This includes:
+- `.config.kiro` — editor configuration file
+- `tasks.meta.json` — editor task-tracking JSON
 - `design.md`, `requirements.md`, `tasks.md` — spec files (superseded by `FRONTEND_PLAN.md`)
 
-IDE-specific directories should typically be gitignored (analogous to `.idea/`, `.vscode/`). The spec documents have value as historical context, but the `.config.kiro` and `tasks.meta.json` files are IDE metadata with no value to other contributors.
+Editor-specific directories should typically be gitignored (analogous to `.idea/`, `.vscode/`). The spec documents have value as historical context, but the two state files have no value to other contributors.
+
+> **RESOLVED.** Documents moved to `docs/archive/frontend-spec/`, state files untracked, hidden
+> directory ignored. See §Duplicated/superseded documentation.
 
 ### Missing `docs/` organisation
 
@@ -502,7 +510,7 @@ feat(api): add /predict/batch endpoint with CSV and JSON support
 fix(api): redact filesystem paths from /model artifact metadata
 docs(readme): rebuild project README as engineering showcase
 ci(frontend): add TypeScript, ESLint, Vitest, and build workflow
-chore(gitignore): add root node_modules and .kiro IDE directories
+chore(gitignore): ignore root node_modules and editor state directories
 refactor(agent): extract dialogue FSM from chatbot loop
 test(pipeline): add preprocessing leakage regression test
 ```
@@ -619,8 +627,8 @@ On PR to main:
 | `ckd-frontend/STATUS.md` | `test/preprocessing-shap-pipeline` (deleted in working tree) | Temporary status file. Already deleted locally. | NONE |
 | `ckd-frontend/src/App.tsx`, `App.css` | `test/preprocessing-shap-pipeline` (deleted in working tree, replaced by proper architecture) | Superseded by the proper component-based structure in the current untracked working tree | LOW — confirm replacement exists before committing deletion |
 | `ckd-frontend/src/assets/react.svg`, `vite.svg`, `hero.png` | `test/preprocessing-shap-pipeline` (deleted in working tree) | Default Vite scaffold assets not used in the actual app | NONE |
-| `.kiro/specs/ckd-frontend/.config.kiro` | `test/preprocessing-shap-pipeline` (tracked) | IDE metadata with no value to contributors | LOW — remove from git tracking |
-| `.kiro/specs/ckd-frontend/tasks.meta.json` | `test/preprocessing-shap-pipeline` (tracked) | IDE task tracking; changes on every task state change; creates noisy commits | LOW — add to `.gitignore` or remove from tracking |
+| `.config.kiro` (editor config, in the hidden spec directory) | `test/preprocessing-shap-pipeline` (tracked) | Editor state with no value to contributors | DONE — untracked, still on disk |
+| `tasks.meta.json` (editor task state, same directory) | `test/preprocessing-shap-pipeline` (tracked) | Editor task tracking; changes on every task state change; creates noisy commits | DONE — untracked and ignored |
 | `github.md` | Root (untracked) | The governance spec prompt — not engineering documentation | NONE (not tracked; just delete locally) |
 
 ### Things that look like cleanup candidates but are NOT
@@ -629,7 +637,7 @@ On PR to main:
 |---|---|
 | `AUDIT.md` | Authoritative engineering record; referenced throughout the codebase; genuine provenance value |
 | `clauket.md` sprint history section | Wait — `clauket.md` as a whole should go; the audit findings it summarises are in `AUDIT.md` |
-| `.kiro/specs/ckd-frontend/requirements.md`, `design.md`, `tasks.md` | Historical documentation of the spec process; `FRONTEND_PLAN.md` notes they are retained. Keep but ensure they are clearly marked superseded |
+| `docs/archive/frontend-spec/requirements.md`, `design.md`, `tasks.md` | Historical documentation of the spec process; `FRONTEND_PLAN.md` notes they are retained. Keep but ensure they are clearly marked superseded |
 | Sprint tags (`sprint-0` to `sprint-6`) | Engineering history; do not delete |
 | `notebooks/` | EDA provenance; do not delete |
 | `data/raw/uci_ckd.csv` | Public, CC BY 4.0 dataset committed intentionally; do not delete |
@@ -645,7 +653,7 @@ On PR to main:
 | Delete `feat/shap-explainability` branch from origin | **Partially** — commits are reachable from main; branch pointer is gone | **LOW-MEDIUM** | Confirm with `git diff main feat/shap-explainability --stat` that no unique content exists. The 3-line diff on non-shared files should be zero. Do NOT delete until this is verified. |
 | Delete `test/preprocessing-shap-pipeline` branch from origin | Yes — only after PR is merged to main | **HIGH if done before merging** | PR must be opened, CI must pass, PR must be merged, then branch can be safely deleted. Do not delete before merge. |
 | Delete `my-experimental-feature` local branch | Yes — after pushing to origin and opening PR | **HIGH if done before merging** | Branch must be pushed to origin first. |
-| Remove `.kiro/` from git tracking (gitignore + `git rm --cached`) | Yes — files stay on disk; only removed from git index | **LOW** | Confirm `.kiro/` contains no documentation that exists nowhere else. The spec files are superseded; `.config.kiro` and `tasks.meta.json` are IDE metadata. |
+| Untrack the hidden editor spec directory (gitignore + `git rm --cached`), keeping the documents at `docs/archive/frontend-spec/` | Yes — files stay on disk; only removed from git index | **LOW** | DONE. The three spec documents were moved with `git mv` (rename recorded, history preserved) and only the two editor-state files were untracked. |
 | Fix `ckd-frontend/.gitignore` to cover `.env.development` | Yes | **NONE** | The file has no secrets; fix is additive (ignore more things). |
 | Add root-level `node_modules/` to root `.gitignore` | Yes | **NONE** | Additive change only. |
 | Strip `artifacts[*].path` from `/model` API response | Backend behavior change | **MEDIUM** | Must be done as an explicit commit with tests updated. Frontend architecture already anticipates this. Do not do silently. |

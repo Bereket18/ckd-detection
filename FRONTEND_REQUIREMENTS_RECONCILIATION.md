@@ -4,14 +4,14 @@
 **Date:** 2026-09-01
 **Status:** Complete
 **Outcome:** [FRONTEND_PLAN.md](FRONTEND_PLAN.md) is now the single authoritative source for
-frontend development. `.kiro/specs/ckd-frontend/` is retained as historical/superseded
-documentation.
+frontend development. The original specification is retained as superseded historical documentation
+at [docs/archive/frontend-spec/](docs/archive/frontend-spec/).
 
 ## Why this report exists
 
 Two frontend specifications existed side by side and contradicted each other:
 
-| | `.kiro/specs/ckd-frontend/` | `FRONTEND_PLAN.md` (before) |
+| | Original spec (now archived) | `FRONTEND_PLAN.md` (before) |
 |---|---|---|
 | Written for | Clinicians, desktop 768–1920 px | Patients + researchers, unspecified |
 | Product | One page: form → results, plus CSV batch | 10 areas incl. Learn, Federated, Research Lab |
@@ -25,9 +25,9 @@ Neither was kept for existing. Each requirement was evaluated against the live b
 against the product intent. Requirements that named backend capabilities which do not exist were
 demoted to dependencies rather than silently carried forward.
 
-## 1. Kept from the Kiro specification
+## 1. Kept from the original specification
 
-Roughly 45 of the 70 Kiro acceptance criteria survive. Each was checked against the backend before
+Roughly 45 of its 70 acceptance criteria survive. Each was checked against the backend before
 being kept.
 
 ### Verified against the backend contract, kept verbatim
@@ -49,8 +49,8 @@ being kept.
 - **Error handling** (R2.4–R2.7 plus `design.md` §Error Handling). Verified these are the status
   codes the backend actually emits: 422 from `api/routes/assessment.py:30`, 503 from
   `api/dependencies.py:21`, 500 from unhandled service errors.
-- **415 added.** Kiro missed it. `/predict/batch` rejects a non-`text/csv` content type with 415,
-  so the frontend needs a case for it. This is the one place the reconciliation *adds* a
+- **415 added.** The original spec missed it. `/predict/batch` rejects a non-`text/csv` content type
+  with 415, so the frontend needs a case for it. This is the one place the reconciliation *adds* a
   requirement rather than keeping or rejecting one.
 - 30 s timeout and offline handling kept as specified.
 
@@ -83,7 +83,7 @@ These are better written than anything in the new plan and survive intact:
 - Port 5173 and the Vite dev server, which matches both the code on disk and the backend's CORS
   allow-list (`api/main.py`), so no backend change was needed to adopt it.
 
-## 2. Rejected from the Kiro specification, with reasons
+## 2. Rejected from the original specification, with reasons
 
 Nine requirements do not survive. None was dropped for being inconvenient; each is either
 contradicted by the backend or by the product decision recorded in `FRONTEND_PLAN.md`.
@@ -108,9 +108,10 @@ Rationale: batch scoring is wrong for a patient completing one assessment, but `
 implemented and working, and bulk scoring is exactly what a research tool needs. Two corrections
 were applied while moving it:
 
-- **415 case added** (Kiro omitted it) — see §1.
+- **415 case added** (the original spec omitted it) — see §1.
 - The endpoint also accepts `application/json` and `application/csv`, and takes an
-  `explain=false` query parameter, so batch SHAP is opt-in. Kiro described only `text/csv`.
+  `explain=false` query parameter, so batch SHAP is opt-in. The original spec described only
+  `text/csv`.
 
 ## 4. Changed in `FRONTEND_PLAN.md`
 
@@ -131,7 +132,7 @@ The plan was not treated as automatically correct. Eleven changes were made to i
 5. **New hard rule: the frontend never renders `model.artifacts[*].path`.** `/model` currently ships
    absolute filesystem paths to the browser — see §7 item 7.
 6. **Acceptance criteria added.** The plan had none; it was a vision document. Each of the 10 areas
-   now carries EARS-style criteria, seeded from the ~45 Kiro criteria kept in §1.
+   now carries EARS-style criteria, seeded from the ~45 criteria kept in §1.
 7. **Areas with no backend data source are now labelled**, not described as if they were live. See §6.
 8. **Demo Mode rules added** — a persistently visible banner, synthetic values held in state
    separate from real input, and no path by which demo data can reach a real assessment.
@@ -248,8 +249,8 @@ history to recover from.
 
 Historical facts worth keeping from `REPOSITORY_CLEANUP.md` before its removal:
 
-- The Kiro specification comprised **10 requirements / 70 acceptance criteria / 91 tasks**, of which
-  11 were marked complete. Those figures are the baseline this reconciliation measures against.
+- The original specification comprised **10 requirements / 70 acceptance criteria / 91 tasks**, of
+  which 11 were marked complete. Those figures are the baseline this reconciliation measures against.
 - The frontend was built across four commits (`31d1660` → `65cf810`), with the service layer added
   last and never tracked, which is how the `.gitignore` exclusion went unnoticed.
 - Its stated fallback option — "all specifications are complete, regenerate clean code from specs" —
@@ -259,9 +260,10 @@ Historical facts worth keeping from `REPOSITORY_CLEANUP.md` before its removal:
 Its incorrect claims were not carried forward. Removed: `REPOSITORY_CLEANUP.md`,
 `ckd-frontend/CORRUPTED_FILES.md`, `ckd-frontend/STATUS.md`.
 
-## 10. Status of the Kiro specification
+## 10. Status of the original specification
 
-`.kiro/specs/ckd-frontend/requirements.md`, `design.md`, and `tasks.md` are **retained**, each
-carrying a SUPERSEDED banner pointing at `FRONTEND_PLAN.md`. Contents are otherwise unchanged and
-nothing under `.kiro/` was deleted. The 91 tasks in `tasks.md` are superseded, not scheduled — none
-were executed in Phase 0.
+Its `requirements.md`, `design.md`, and `tasks.md` are **retained**, each carrying a SUPERSEDED
+banner pointing at `FRONTEND_PLAN.md`. Contents are otherwise unchanged and no specification
+document was deleted; all three are archived at
+[docs/archive/frontend-spec/](docs/archive/frontend-spec/). The 91 tasks in `tasks.md` are
+superseded, not scheduled — none were executed in Phase 0.

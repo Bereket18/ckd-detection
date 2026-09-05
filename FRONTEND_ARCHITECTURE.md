@@ -1497,7 +1497,8 @@ has not been thought through.
 ### ADR-1 — Vite + React SPA, not Next.js
 
 `FRONTEND_PLAN.md` originally named Next.js. The code on disk is Vite 8 + React 19, the backend's CORS
-already allows `:5173`, and the superseded Kiro design also specified Vite. Nothing in the product needs
+already allows `:5173`, and the superseded [design document](docs/archive/frontend-spec/design.md) also
+specified Vite. Nothing in the product needs
 SSR: there is no SEO-critical content behind data, no server-side session, and the one API is a separate
 Python service. **Decision: stay on Vite; the plan was corrected.** Consequences: no server tier, so every
 `VITE_*` value is public (§8.2) and any future secret needs a backend route; no progressive enhancement
