@@ -133,10 +133,10 @@ def test_changing_the_metrics_file_changes_the_card(card_env, card):
 
     Scoped to that row on purpose. A bare `"0.9750" not in regenerated` would be
     asserting something the card cannot satisfy and should not have to: 0.9750 is
-    also the *sweep* accuracy at thresholds 0.50 and 0.70, and changing the
-    headline figure must not touch rows measured at other thresholds. The earlier
-    unscoped form failed for exactly that reason -- the card was right and the
-    assertion was wrong.
+    also the *sweep* accuracy at thresholds 0.50 and 0.70, and those legitimately
+    do not change when the top-level figure does. The earlier unscoped form
+    failed for exactly that reason -- the card was right and the assertion was
+    wrong.
     """
     metrics_path, _ = card_env
     worse = {**METRICS, "accuracy": 0.5}
