@@ -1,7 +1,8 @@
 # EthioCKD Frontend Plan
 
 > **AUTHORITATIVE.** This document is the single source of truth for frontend **requirements**.
-> It supersedes `.kiro/specs/ckd-frontend/` (retained as historical documentation).
+> It supersedes the original frontend specification, kept as historical documentation at
+> [docs/archive/frontend-spec/](docs/archive/frontend-spec/).
 > The reasoning behind every Phase 0 change is recorded in
 > [FRONTEND_REQUIREMENTS_RECONCILIATION.md](FRONTEND_REQUIREMENTS_RECONCILIATION.md).
 >
@@ -69,9 +70,9 @@ FastAPI (protected)
 ```
 
 Vite, not Next.js. The previous version of this plan named Next.js; the repository has always been
-Vite, `.kiro/specs/ckd-frontend/design.md` specified Vite on port 5173, and the backend's CORS
-allow-list already permits `http://localhost:5173`. Choosing Vite meant **no backend change was
-required in Phase 0** — see the reconciliation report.
+Vite, the archived [design document](docs/archive/frontend-spec/design.md) specified Vite on port
+5173, and the backend's CORS allow-list already permits `http://localhost:5173`. Choosing Vite
+meant **no backend change was required in Phase 0** — see the reconciliation report.
 
 ### Frontend stack
 
@@ -191,7 +192,7 @@ There is no global store.
 
 ## Area requirements
 
-Written EARS-style. Roughly 45 criteria are carried forward from the Kiro specification, each
+Written EARS-style. Roughly 45 criteria are carried forward from the original specification, each
 verified against the backend before being kept; see the reconciliation report for what was rejected.
 
 ### 1. Dashboard
@@ -349,7 +350,7 @@ exposes them.
    test performance and carry the caveats in `model.limitations` — read from the response, not
    authored in the frontend.
 6. THE Research Lab SHALL host batch scoring at its own route, `/research/batch` (relocated from the
-   Kiro assessment flow, which is wrong for a patient completing one assessment):
+   original clinician assessment flow, which is wrong for a patient completing one assessment):
    - accept a CSV file upload;
    - **before uploading**, parse the header row in the browser and check it against
      `/model.feature_schema`. Report unknown columns and missing columns as a local error. This is
@@ -461,7 +462,7 @@ the raw error. An ErrorBoundary wraps each route.
 4. THE app SHALL provide ARIA labels on every input and button.
 5. THE app SHALL use semantic HTML and visible focus states.
 6. THE app SHALL respect `prefers-reduced-motion`.
-7. THE app SHALL be mobile-first from 320 px upward. (The Kiro spec's desktop-first 768–1920 px
+7. THE app SHALL be mobile-first from 320 px upward. (The original spec's desktop-first 768–1920 px
    two-column grid is rejected — this is a patient-facing product.)
 
 #### Patterns carried forward from the deleted form components
@@ -759,9 +760,10 @@ re-derived. It is a record, not a requirement — the requirements are everythin
 
 Phase 0 deliverables: this document (rewritten as the single authority),
 [`FRONTEND_REQUIREMENTS_RECONCILIATION.md`](FRONTEND_REQUIREMENTS_RECONCILIATION.md), SUPERSEDED
-banners on the three `.kiro/specs/ckd-frontend/` files, and a `ckd-frontend/` tree that typechecks,
-lints, tests, and builds clean. No UI was built. No dependency was installed. The backend was not
-touched.
+banners on the three archived specification files (now at
+[docs/archive/frontend-spec/](docs/archive/frontend-spec/)), and a `ckd-frontend/` tree that
+typechecks, lints, tests, and builds clean. No UI was built. No dependency was installed. The
+backend was not touched.
 
 ### What was found
 
@@ -772,7 +774,7 @@ with documentation that misdescribed both.
   counter with links to Vite docs, Discord, Bluesky, and X — plus its 184-line `App.css` and
   111-line `index.css` (purple `#aa3bff` accent). No product UI existed at all.
 - The stack on disk was **Vite 8 + React 19 + hand-rolled BEM CSS**, not the Next.js + Tailwind this
-  plan used to name. That mismatch is why the stack decision went to Vite: the code, the old Kiro
+  plan used to name. That mismatch is why the stack decision went to Vite: the code, the archived
   `design.md`, and the backend's CORS allow-list (`:5173`) already agreed with each other, and only
   this document disagreed.
 - Beneath it sat ~1,100 lines worth keeping: the API client, the error handler, the response types,
@@ -817,15 +819,16 @@ errors.
 file; following it would have "fixed" working code and left the real breakage in place),
 `ckd-frontend/STATUS.md`, `ckd-frontend/TASK_4.5_VERIFICATION.md`, and the root
 `REPOSITORY_CLEANUP.md`. All four also had mangled backtick escapes. Their genuinely useful
-history — the 10-requirement / 70-criteria / 91-task shape of the Kiro spec and the four-commit
+history — the 10-requirement / 70-criteria / 91-task shape of the original spec and the four-commit
 provenance `31d1660` → `65cf810` — is preserved in §9 of the reconciliation report; their incorrect
 claims were not preserved.
 
 `ckd-frontend/README.md` was **rewritten, not deleted** (it claimed React 18, a single-page
 clinician app, and MSW).
 
-Nothing under `.kiro/` was deleted. Nothing in `api/`, `src/`, `tests/`, `config.py`,
-`saved_models/`, `data/`, `notebooks/`, `scripts/`, or `.github/` was touched.
+No specification document was deleted; all three are archived under
+[docs/archive/frontend-spec/](docs/archive/frontend-spec/). Nothing in `api/`, `src/`, `tests/`,
+`config.py`, `saved_models/`, `data/`, `notebooks/`, `scripts/`, or `.github/` was touched.
 
 ### What was preserved, and what was repaired
 

@@ -83,5 +83,7 @@ npm test -- validation.schema.test.ts
 ## References
 
 - Backend API Schema: `api/schemas.py`
-- Design Document: `.kiro/specs/ckd-frontend/design.md`
-- Requirements: `.kiro/specs/ckd-frontend/requirements.md`
+- Authoritative requirements: `FRONTEND_PLAN.md`
+- Authoritative design: `FRONTEND_ARCHITECTURE.md`
+- Superseded originals, kept for history only: `docs/archive/frontend-spec/design.md` and
+  `docs/archive/frontend-spec/requirements.md`

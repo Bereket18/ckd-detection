@@ -8,7 +8,8 @@ explains which values moved the score → a printable report goes to a clinician
 
 > Authoritative requirements: [`../FRONTEND_PLAN.md`](../FRONTEND_PLAN.md).
 > Why the requirements changed: [`../FRONTEND_REQUIREMENTS_RECONCILIATION.md`](../FRONTEND_REQUIREMENTS_RECONCILIATION.md).
-> `.kiro/specs/ckd-frontend/` is historical and marked SUPERSEDED — do not implement from it.
+> The original specification at [`../docs/archive/frontend-spec/`](../docs/archive/frontend-spec/)
+> is historical and marked SUPERSEDED — do not implement from it.
 
 ## Run it
 
